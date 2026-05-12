@@ -132,14 +132,18 @@ public class MainView extends BorderPane {
             );
         }
 
-        // Never cache Consommations so building list stays fresh
+        // Refresh building lists when switching back
         boolean refreshConsommations = "Consommations".equals(viewName)
+                && viewCache.containsKey(viewName);
+        boolean refreshGraphiques = "Graphiques".equals(viewName)
                 && viewCache.containsKey(viewName);
 
         // Cached or create
         Node view = viewCache.computeIfAbsent(viewName, this::createView);
         if (refreshConsommations) {
             ((ConsumptionView) view).rafraichir();
+        } else if (refreshGraphiques) {
+            ((ChartView) view).rafraichir();
         }
         if (currentView != view) {
             contentArea.getChildren().clear();

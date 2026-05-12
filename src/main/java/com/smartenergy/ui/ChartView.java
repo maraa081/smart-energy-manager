@@ -96,6 +96,11 @@ public class ChartView extends VBox {
         rafraichirBatiments();
     }
 
+    /** Refresh building list when switching back to this view */
+    public void rafraichir() {
+        rafraichirBatiments();
+    }
+
     private void rafraichirBatiments() {
         List<Building> buildings = service.getAllBuildings();
         buildingSelector.setItems(FXCollections.observableArrayList(buildings));
