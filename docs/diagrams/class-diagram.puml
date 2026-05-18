@@ -1,0 +1,211 @@
+@startuml SmartEnergyManager_ClassDiagram
+!theme plain
+skinparam backgroundColor #f8f9fa
+skinparam componentStyle rectangle
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+hide stereotype
+skinparam class {
+    BorderColor #0f3460
+    BackgroundColor #e8f0fe
+    FontColor #0f3460
+    HeaderBackgroundColor #0f3460
+    HeaderFontColor white
+    FontSize 11
+}
+skinparam enum {
+    BorderColor #0f3460
+    BackgroundColor #d4edda
+    FontColor #0f3460
+}
+skinparam package {
+    BorderColor #6c757d
+    BackgroundColor #f8f9fa
+    FontColor #343a40
+    FontStyle bold
+}
+
+package "model" {
+    class Building {
+        - id: UUID
+        - name: String
+        - address: String
+        - surface: double
+        - type: BuildingType
+        - records: List<ConsumptionRecord>
+        + Building(name, address, surface, type)
+        + getTotalConsumption(): double
+        + getTotalCost(): double
+        + getRecordCount(): int
+        + addRecord(record): void
+    }
+
+    class ConsumptionRecord {
+        - timestamp: LocalDateTime
+        - energyType: EnergyType
+        - quantity: double
+        - cost: double
+        + ConsumptionRecord(timestamp, energyType, quantity, cost)
+    }
+
+    class Anomaly {
+        + description: String
+        + date: LocalDateTime
+        + type: AnomalyType
+        + ecart: double
+    }
+
+    enum BuildingType {
+        MAISON
+        APPARTEMENT
+        BUREAU
+        LOCAL_COMMERCIAL
+        BATIMENT_UNIVERSITAIRE
+        AUTRE
+    }
+
+    enum EnergyType {
+        ELECTRICITE
+        EAU
+        GAZ
+        CHAUFFAGE
+        CLIMATISATION
+        SOLAIRE
+    }
+
+    enum AnomalyType {
+        PIC_CONSOMMATION
+        ABSENCE_DONNEES
+        VALEUR_ABERRANTE
+        AUTRE
+    }
+
+    class DashboardSummary {
+        + today: double
+        + thisMonth: double
+        + thisYear: double
+        + totalCost: double
+        + topBuilding: String
+        + trend: String
+        + anomalies: List<Anomaly>
+    }
+}
+
+package "data" {
+    class JsonRepository {
+        - {static} instance: JsonRepository
+        + {static} getInstance(): JsonRepository
+        + saveAll(): void
+        + loadAll(): List<Building>
+        + saveBuilding(building): void
+        + getBuilding(id): Building
+        + deleteBuilding(id): void
+    }
+
+    class CsvImporter {
+        + importCsv(filePath): List<ConsumptionRecord>
+    }
+}
+
+package "service" {
+    class EnergyService {
+        - {static} instance: EnergyService
+        + {static} getInstance(): EnergyService
+        + getAllBuildings(): List<Building>
+        + addBuilding(building): void
+        + updateBuilding(building): void
+        + deleteBuilding(id): void
+        + addConsumption(buildingId, record): void
+        + getDashboardSummary(): DashboardSummary
+        + getDominantEnergy(): EnergyType
+        + getTrend(): String
+        + getMonthlyEstimate(): double
+        + getConsumptionPeaks(): List<ConsumptionRecord>
+        + getAnomalies(): List<Anomaly>
+        + generateTestData(): void
+        + importCsv(buildingId, filePath): void
+        + cloneBuilding(id): Building
+        + getBuildingComparison(): Map<String, Double>
+    }
+
+    class AnalysisService {
+        + {static} getDominantEnergy(building): EnergyType
+        + {static} getTrend(building): String
+        + {static} getMonthlyEstimate(building): double
+        + {static} getConsumptionPeaks(building): List<ConsumptionRecord>
+        + {static} compareBuildings(buildings): Map<String, Double>
+        + {static} predictNextMonth(building): double
+    }
+
+    class AnomalyDetector {
+        + detectPeaks(records): List<Anomaly>
+        + detectMissingData(records): List<Anomaly>
+        + detectOutliers(records): List<Anomaly>
+        + detectAll(records): List<Anomaly>
+    }
+
+    class WeatherService {
+        + getTemperature(lat, lon, date): double
+        + isHeatwave(lat, lon, date): boolean
+        + isFreezing(lat, lon, date): boolean
+        + isHeavyRain(lat, lon, date): boolean
+    }
+}
+
+package "ui" {
+    class App {
+        + {static} main(args): void
+    }
+
+    class MainView {
+        + MainView()
+        + initialize(): void
+    }
+
+    class DashboardView {
+        + DashboardView()
+        + refresh(): void
+    }
+
+    class BuildingView {
+        + BuildingView()
+        + refresh(): void
+    }
+
+    class ConsumptionView {
+        + ConsumptionView()
+        + refresh(): void
+    }
+
+    class ChartView {
+        + ChartView()
+        + refresh(): void
+    }
+
+    class AnalysisView {
+        + AnalysisView()
+        + refresh(): void
+    }
+}
+
+' Relations
+Building *-- ConsumptionRecord : contient
+Building --> BuildingType
+ConsumptionRecord --> EnergyType
+Anomaly --> AnomalyType
+
+JsonRepository --> Building : persiste >
+EnergyService --> JsonRepository : utilise >
+EnergyService --> AnalysisService : délègue >
+EnergyService --> AnomalyDetector : délègue >
+EnergyService --> DashboardSummary : crée >
+
+' Dépendances UI
+MainView --> EnergyService : appelle >
+DashboardView --> EnergyService
+BuildingView --> EnergyService
+ConsumptionView --> EnergyService
+ChartView --> EnergyService
+AnalysisView --> EnergyService
+
+@enduml

@@ -1,0 +1,91 @@
+@startuml SmartEnergyManager_UseCaseDiagram
+!theme plain
+skinparam backgroundColor #f8f9fa
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam actor {
+    BorderColor #0f3460
+    BackgroundColor #d4edda
+    FontColor #0f3460
+    FontSize 13
+    FontStyle bold
+}
+skinparam usecase {
+    BorderColor #0f3460
+    BackgroundColor #e8f0fe
+    FontColor #0f3460
+    FontSize 11
+}
+skinparam package {
+    BorderColor #6c757d
+    BackgroundColor #f8f9fa
+    FontColor #343a40
+    FontStyle bold
+    FontSize 13
+}
+
+left to right direction
+
+actor "Utilisateur" as user
+actor "Système Météo\n(API Open-Meteo)" as weather_sys
+
+rectangle "Smart Energy Manager" {
+    usecase "UC1\nConsulter le\nTableau de bord" as UC_DASH
+    usecase "UC2\nGérer les\nbâtiments" as UC_BUILD
+    usecase "UC3\nAjouter un\nrelevé manuel" as UC_ADD_REC
+    usecase "UC4\nImporter des\nrelevés (CSV)" as UC_CSV
+    usecase "UC5\nGénérer des\ndonnées de test" as UC_TEST
+    usecase "UC6\nVisualiser les\ngraphiques" as UC_CHART
+    usecase "UC7\nAnalyser les\nconsommations" as UC_ANALYSE
+    usecase "UC8\nDétecter les\nanomalies" as UC_ANOM
+    usecase "UC9\nConsulter la\nmétéo" as UC_WTHR
+    usecase "UC10\nPrédire la\nconsommation" as UC_PREDICT
+    usecase "UC11\nComparer les\nbâtiments" as UC_COMPARE
+    usecase "UC12\nCloner un\nbâtiment" as UC_CLONE
+}
+
+user --> UC_DASH
+user --> UC_BUILD
+user --> UC_ADD_REC
+user --> UC_CSV
+user --> UC_TEST
+user --> UC_CHART
+user --> UC_ANALYSE
+user --> UC_ANOM
+user --> UC_WTHR
+user --> UC_PREDICT
+user --> UC_COMPARE
+user --> UC_CLONE
+
+weather_sys <-- UC_WTHR
+
+' UC2 includes sub-actions
+note right of UC_BUILD
+  Inclut :
+  • Ajouter
+  • Modifier
+  • Supprimer
+  • Cloner
+end note
+
+' UC6 includes sub-actions
+note right of UC_CHART
+  4 onglets :
+  • Courbe temporelle
+  • Histogramme mensuel
+  • Répartition par énergie
+  • Comparaison
+end note
+
+' UC7 includes sub-actions
+note right of UC_ANALYSE
+  Affiche :
+  • Stats générales
+  • Tendance
+  • Estimation mensuelle
+  • Pics de consommation
+  • Anomalies détectées
+  • Prédiction
+end note
+
+@enduml
