@@ -3,25 +3,27 @@
 skinparam backgroundColor #f8f9fa
 skinparam componentStyle rectangle
 skinparam defaultFontName Helvetica
-skinparam defaultFontSize 11
-hide stereotype
+skinparam defaultFontSize 13
 skinparam class {
     BorderColor #0f3460
     BackgroundColor #e8f0fe
     FontColor #0f3460
     HeaderBackgroundColor #0f3460
     HeaderFontColor white
-    FontSize 11
+    FontSize 13
+    FontStyle bold
 }
 skinparam enum {
     BorderColor #0f3460
     BackgroundColor #d4edda
     FontColor #0f3460
+    FontSize 12
 }
 skinparam note {
     BorderColor #6c757d
     BackgroundColor #fff3cd
     FontColor #856404
+    FontSize 11
 }
 skinparam package {
     BorderColor #6c757d
@@ -29,8 +31,12 @@ skinparam package {
     FontColor #343a40
     FontStyle bold
 }
+skinparam arrow {
+    FontSize 11
+    FontColor #0f3460
+}
 
-package "model" {
+package "model" <<Modèle>> {
     class Building {
         - id: UUID
         - name: String
@@ -53,12 +59,13 @@ package "model" {
         + ConsumptionRecord(timestamp, energyType, quantity, cost)
     }
 
-    note top of ConsumptionRecord
-      quantity: unité selon EnergyType
-      ÉLECTRICITÉ / GAZ / SOLAIRE
-        → kWh
-      CHAUFFAGE / CLIMATISATION
-        → kWh
+    note right of ConsumptionRecord
+      Unités :
+      ÉLECTRICITÉ → kWh
+      GAZ → kWh
+      SOLAIRE → kWh
+      CHAUFFAGE → kWh
+      CLIMATISATION → kWh
       EAU → m³
     end note
 
@@ -105,7 +112,7 @@ package "model" {
     }
 }
 
-package "data" {
+package "data" <<Persistance>> {
     class JsonRepository <<singleton>> {
         - {static} instance: JsonRepository
         + {static} getInstance(): JsonRepository
@@ -121,7 +128,7 @@ package "data" {
     }
 }
 
-package "service" {
+package "service" <<Services>> {
     class EnergyService <<singleton>> {
         - {static} instance: EnergyService
         + {static} getInstance(): EnergyService
@@ -166,7 +173,7 @@ package "service" {
     }
 }
 
-package "ui" {
+package "ui" <<Interface Utilisateur>> {
     class App {
         + {static} main(args): void
     }
@@ -203,7 +210,7 @@ package "ui" {
 }
 
 ' ============================================================
-' Relations AVEC cardinalités
+' Relations avec cardinalités
 ' ============================================================
 
 ' Model
@@ -223,7 +230,7 @@ EnergyService "1" ---> "1" AnalysisService : délègue >
 EnergyService "1" ---> "1" AnomalyDetector : délègue >
 EnergyService "1" ---> "1" DashboardSummary : crée >
 
-' Dépendances UI
+' UI
 MainView "*" --> "1" EnergyService : appelle >
 DashboardView "*" --> "1" EnergyService
 BuildingView "*" --> "1" EnergyService
