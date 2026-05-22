@@ -6,7 +6,7 @@ public class ConsumptionRecord {
 
     private LocalDateTime dateHeure;
     private EnergyType type;
-    private double quantite;       // en kWh
+    private double quantite;       // unité selon EnergyType (kWh ou m³)
     private double coutEstime;     // en euros
     private String unite;
 

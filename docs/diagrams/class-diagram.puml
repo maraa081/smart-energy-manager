@@ -18,6 +18,11 @@ skinparam enum {
     BackgroundColor #d4edda
     FontColor #0f3460
 }
+skinparam note {
+    BorderColor #6c757d
+    BackgroundColor #fff3cd
+    FontColor #856404
+}
 skinparam package {
     BorderColor #6c757d
     BackgroundColor #f8f9fa
@@ -47,6 +52,15 @@ package "model" {
         - cost: double
         + ConsumptionRecord(timestamp, energyType, quantity, cost)
     }
+
+    note top of ConsumptionRecord
+      quantity: unité selon EnergyType
+      ÉLECTRICITÉ / GAZ / SOLAIRE
+        → kWh
+      CHAUFFAGE / CLIMATISATION
+        → kWh
+      EAU → m³
+    end note
 
     class Anomaly {
         + description: String
@@ -92,7 +106,7 @@ package "model" {
 }
 
 package "data" {
-    class JsonRepository {
+    class JsonRepository <<singleton>> {
         - {static} instance: JsonRepository
         + {static} getInstance(): JsonRepository
         + saveAll(): void
@@ -108,7 +122,7 @@ package "data" {
 }
 
 package "service" {
-    class EnergyService {
+    class EnergyService <<singleton>> {
         - {static} instance: EnergyService
         + {static} getInstance(): EnergyService
         + getAllBuildings(): List<Building>
@@ -188,24 +202,35 @@ package "ui" {
     }
 }
 
-' Relations
-Building *-- ConsumptionRecord : contient
-Building --> BuildingType
-ConsumptionRecord --> EnergyType
-Anomaly --> AnomalyType
+' ============================================================
+' Relations AVEC cardinalités
+' ============================================================
 
-JsonRepository --> Building : persiste >
-EnergyService --> JsonRepository : utilise >
-EnergyService --> AnalysisService : délègue >
-EnergyService --> AnomalyDetector : délègue >
-EnergyService --> DashboardSummary : crée >
+' Model
+Building "1" --- "*" ConsumptionRecord : contient >
+Building "1" --- "1" BuildingType : a pour type >
+ConsumptionRecord "*" --- "1" EnergyType : type >
+Anomaly "*" --- "1" AnomalyType : type >
+DashboardSummary "1" --- "*" Anomaly : liste >
+
+' Data
+JsonRepository "1" --- "*" Building : persiste >
+CsvImporter "1" ..> "*" ConsumptionRecord : importe >
+
+' Service
+EnergyService "1" ---> "1" JsonRepository : utilise >
+EnergyService "1" ---> "1" AnalysisService : délègue >
+EnergyService "1" ---> "1" AnomalyDetector : délègue >
+EnergyService "1" ---> "1" DashboardSummary : crée >
 
 ' Dépendances UI
-MainView --> EnergyService : appelle >
-DashboardView --> EnergyService
-BuildingView --> EnergyService
-ConsumptionView --> EnergyService
-ChartView --> EnergyService
-AnalysisView --> EnergyService
+MainView "*" --> "1" EnergyService : appelle >
+DashboardView "*" --> "1" EnergyService
+BuildingView "*" --> "1" EnergyService
+ConsumptionView "*" --> "1" EnergyService
+ChartView "*" --> "1" EnergyService
+AnalysisView "*" --> "1" EnergyService
+
+App "1" --> "1" MainView : lance >
 
 @enduml
