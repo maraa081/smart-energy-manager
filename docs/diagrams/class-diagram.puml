@@ -1,243 +1,248 @@
-@startuml SmartEnergyManager_ClassDiagram
-!theme plain
-skinparam backgroundColor #f8f9fa
-skinparam componentStyle rectangle
-skinparam defaultFontName Helvetica
-skinparam defaultFontSize 13
+@startuml
+title Smart Energy Manager — Diagramme de Classes
+
+skinparam style strictuml
+skinparam backgroundColor #FEFEFE
 skinparam class {
-    BorderColor #0f3460
-    BackgroundColor #e8f0fe
-    FontColor #0f3460
-    HeaderBackgroundColor #0f3460
-    HeaderFontColor white
-    FontSize 13
-    FontStyle bold
-}
-skinparam enum {
-    BorderColor #0f3460
-    BackgroundColor #d4edda
-    FontColor #0f3460
-    FontSize 12
-}
-skinparam note {
-    BorderColor #6c757d
-    BackgroundColor #fff3cd
-    FontColor #856404
-    FontSize 11
-}
-skinparam package {
-    BorderColor #6c757d
-    BackgroundColor #f8f9fa
-    FontColor #343a40
-    FontStyle bold
-}
-skinparam arrow {
-    FontSize 11
-    FontColor #0f3460
-}
-
-package "model" <<Modèle>> {
-    class Building {
-        - id: UUID
-        - name: String
-        - address: String
-        - surface: double
-        - type: BuildingType
-        - records: List<ConsumptionRecord>
-        + Building(name, address, surface, type)
-        + getTotalConsumption(): double
-        + getTotalCost(): double
-        + getRecordCount(): int
-        + addRecord(record): void
-    }
-
-    class ConsumptionRecord {
-        - timestamp: LocalDateTime
-        - energyType: EnergyType
-        - quantity: double
-        - cost: double
-        + ConsumptionRecord(timestamp, energyType, quantity, cost)
-    }
-
-    note right of ConsumptionRecord
-      Unités :
-      ÉLECTRICITÉ → kWh
-      GAZ → kWh
-      SOLAIRE → kWh
-      CHAUFFAGE → kWh
-      CLIMATISATION → kWh
-      EAU → m³
-    end note
-
-    class Anomaly {
-        + description: String
-        + date: LocalDateTime
-        + type: AnomalyType
-        + ecart: double
-    }
-
-    enum BuildingType {
-        MAISON
-        APPARTEMENT
-        BUREAU
-        LOCAL_COMMERCIAL
-        BATIMENT_UNIVERSITAIRE
-        AUTRE
-    }
-
-    enum EnergyType {
-        ELECTRICITE
-        EAU
-        GAZ
-        CHAUFFAGE
-        CLIMATISATION
-        SOLAIRE
-    }
-
-    enum AnomalyType {
-        PIC_CONSOMMATION
-        ABSENCE_DONNEES
-        VALEUR_ABERRANTE
-        AUTRE
-    }
-
-    class DashboardSummary {
-        + today: double
-        + thisMonth: double
-        + thisYear: double
-        + totalCost: double
-        + topBuilding: String
-        + trend: String
-        + anomalies: List<Anomaly>
-    }
-}
-
-package "data" <<Persistance>> {
-    class JsonRepository <<singleton>> {
-        - {static} instance: JsonRepository
-        + {static} getInstance(): JsonRepository
-        + saveAll(): void
-        + loadAll(): List<Building>
-        + saveBuilding(building): void
-        + getBuilding(id): Building
-        + deleteBuilding(id): void
-    }
-
-    class CsvImporter {
-        + importCsv(filePath): List<ConsumptionRecord>
-    }
-}
-
-package "service" <<Services>> {
-    class EnergyService <<singleton>> {
-        - {static} instance: EnergyService
-        + {static} getInstance(): EnergyService
-        + getAllBuildings(): List<Building>
-        + addBuilding(building): void
-        + updateBuilding(building): void
-        + deleteBuilding(id): void
-        + addConsumption(buildingId, record): void
-        + getDashboardSummary(): DashboardSummary
-        + getDominantEnergy(): EnergyType
-        + getTrend(): String
-        + getMonthlyEstimate(): double
-        + getConsumptionPeaks(): List<ConsumptionRecord>
-        + getAnomalies(): List<Anomaly>
-        + generateTestData(): void
-        + importCsv(buildingId, filePath): void
-        + cloneBuilding(id): Building
-        + getBuildingComparison(): Map<String, Double>
-    }
-
-    class AnalysisService {
-        + {static} getDominantEnergy(building): EnergyType
-        + {static} getTrend(building): String
-        + {static} getMonthlyEstimate(building): double
-        + {static} getConsumptionPeaks(building): List<ConsumptionRecord>
-        + {static} compareBuildings(buildings): Map<String, Double>
-        + {static} predictNextMonth(building): double
-    }
-
-    class AnomalyDetector {
-        + detectPeaks(records): List<Anomaly>
-        + detectMissingData(records): List<Anomaly>
-        + detectOutliers(records): List<Anomaly>
-        + detectAll(records): List<Anomaly>
-    }
-
-    class WeatherService {
-        + getTemperature(lat, lon, date): double
-        + isHeatwave(lat, lon, date): boolean
-        + isFreezing(lat, lon, date): boolean
-        + isHeavyRain(lat, lon, date): boolean
-    }
-}
-
-package "ui" <<Interface Utilisateur>> {
-    class App {
-        + {static} main(args): void
-    }
-
-    class MainView {
-        + MainView()
-        + initialize(): void
-    }
-
-    class DashboardView {
-        + DashboardView()
-        + refresh(): void
-    }
-
-    class BuildingView {
-        + BuildingView()
-        + refresh(): void
-    }
-
-    class ConsumptionView {
-        + ConsumptionView()
-        + refresh(): void
-    }
-
-    class ChartView {
-        + ChartView()
-        + refresh(): void
-    }
-
-    class AnalysisView {
-        + AnalysisView()
-        + refresh(): void
-    }
+  BackgroundColor #E8F4FD
+  BorderColor #2E86C1
+  FontColor #1A1A2E
 }
 
 ' ============================================================
-' Relations avec cardinalités
+' Énumérations
 ' ============================================================
 
-' Model
+enum BuildingType {
+  MAISON
+  APPARTEMENT
+  BUREAU
+  LOCAL_COMMERCIAL
+  BATIMENT_UNIVERSITAIRE
+  AUTRE
+}
+
+enum EnergyType {
+  ELECTRICITE
+  GAZ
+  SOLAIRE
+  CHAUFFAGE
+  CLIMATISATION
+  EAU
+}
+
+note right of EnergyType
+  Unités de mesure :
+  ELECTRICITÉ → kWh
+  GAZ → kWh
+  SOLAIRE → kWh
+  CHAUFFAGE → kWh
+  CLIMATISATION → kWh
+  EAU → m³
+end note
+
+enum AnomalyType {
+  PIC_CONSOMMATION
+  ABSENCE_DONNEES
+  VALEUR_ABERRANTE
+  AUTRE
+}
+
+' ============================================================
+' Classes du domaine
+' ============================================================
+
+class ConsumptionRecord {
+  + timestamp: LocalDateTime
+  + energyType: EnergyType
+  + quantity: double  {units: kWh ou m³ selon EnergyType}
+  + cost: double
+  + {method} ConsumptionRecord(timestamp, energyType, quantity, cost)
+}
+
+class Anomaly {
+  + description: String
+  + date: LocalDateTime
+  + type: AnomalyType
+  + ecart: double
+}
+
+class DashboardSummary {
+  + today: double
+  + thisMonth: double
+  + thisYear: double
+  + totalCost: double
+  + topBuilding: String
+  + trend: String
+  + anomalies: List<Anomaly>
+}
+
+class Building {
+  + id: UUID
+  + name: String
+  + address: String
+  + surface: double
+  + type: BuildingType
+  + records: List<ConsumptionRecord>
+  + {method} Building(name, address, surface, type)
+  + getTotalConsumption(): double
+  + getTotalCost(): double
+  + getRecordCount(): int
+  + addRecord(record): void
+}
+
+' ============================================================
+' Services / Analyse
+' ============================================================
+
+class AnalysisService {
+  + getDominantEnergy(building): EnergyType
+  + getTrend(building): String
+  + getMonthlyEstimate(building): double
+  + getConsumptionPeaks(building): List<ConsumptionRecord>
+  + detectPeaks(records): List<Anomaly>
+  + detectOutliers(records): List<Anomaly>
+  + compareBuildings(buildings): Map<String, Double>
+  + predictNextMonth(building): double
+  + detectAll(records): List<Anomaly>
+  + detectMissingData(records): List<Anomaly>
+}
+
+class EnergyService {
+  - {static} instance: EnergyService
+  + {static} getInstance(): EnergyService
+  + getAllBuildings(): List<Building>
+  + addBuilding(building): void
+  + updateBuilding(building): void
+  + deleteBuilding(id): void
+  + addConsumption(buildingId, record): void
+  + getDashboardSummary(): DashboardSummary
+  + getDominantEnergy(): EnergyType
+  + getTrend(): String
+  + getMonthlyEstimate(): double
+  + getAnomalies(): List<Anomaly>
+  + generateTestData(): void
+  + importCsv(buildingId, filePath): void
+  + cloneBuilding(id): Building
+  + getBuildingComparison(): Map<String, Double>
+  + getConsumptionPeaks(): List<ConsumptionRecord>
+  ~~ météo ~~
+  + getTemperature(lat, lon, date): double
+  + isHeatwave(lat, lon, date): boolean
+  + isFreezing(lat, lon, date): boolean
+  + isHeavyRain(lat, lon, date): boolean
+}
+
+note bottom of EnergyService
+  Singleton — point d'entrée unique
+  pour toute la logique métier
+end note
+
+' ============================================================
+' Persistance
+' ============================================================
+
+class JsonRepository {
+  - {static} instance: JsonRepository
+  + {static} getInstance(): JsonRepository
+  + saveAll(): void
+  + loadAll(): List<Building>
+  + saveBuilding(building): void
+  + getBuilding(id): Building
+  + deleteBuilding(id): void
+  + importCsv(filePath): List<ConsumptionRecord>
+}
+
+note bottom of JsonRepository
+  Singleton — persistance en JSON
+  fichier data/buildings.json
+end note
+
+' ============================================================
+' Vues (IHM)
+' ============================================================
+
+class MainView {
+  + {static} main(args): void
+}
+
+class DashboardView {
+  + DashboardView()
+  + refresh(): void
+}
+
+class BuildingView {
+  + BuildingView()
+  + refresh(): void
+}
+
+class ConsumptionView {
+  + ConsumptionView()
+  + refresh(): void
+}
+
+class ChartView {
+  + ChartView()
+  + refresh(): void
+}
+
+class AnalysisView {
+  + AnalysisView()
+  + refresh(): void
+}
+
+' ============================================================
+' Relations — avec cardinalités
+' ============================================================
+
+' Building — ConsumptionRecord
 Building "1" --- "*" ConsumptionRecord : contient >
-Building "1" --- "1" BuildingType : a pour type >
-ConsumptionRecord "*" --- "1" EnergyType : type >
-Anomaly "*" --- "1" AnomalyType : type >
+note on link : Un bâtiment possède\nplusieurs relevés
+
+' Building — BuildingType
+Building "1" --- "1" BuildingType : a un >
+
+' ConsumptionRecord — EnergyType
+ConsumptionRecord "1" --- "1" EnergyType : type >
+
+' Anomaly — AnomalyType
+Anomaly "1" --- "1" AnomalyType : type >
+
+' DashboardSummary — Anomaly
 DashboardSummary "1" --- "*" Anomaly : liste >
 
-' Data
+' EnergyService → AnalysisService (délégation)
+EnergyService "1" --> "1" AnalysisService : délègue >
+note on link : EnergyService délègue\nl'analyse à AnalysisService
+
+' Building — DashboardSummary
+Building "0..1" --- "1" DashboardSummary : résumé >
+
+' JsonRepository — Building
 JsonRepository "1" --- "*" Building : persiste >
-CsvImporter "1" ..> "*" ConsumptionRecord : importe >
+note on link : JSON → data/buildings.json
 
-' Service
-EnergyService "1" ---> "1" JsonRepository : utilise >
-EnergyService "1" ---> "1" AnalysisService : délègue >
-EnergyService "1" ---> "1" AnomalyDetector : délègue >
-EnergyService "1" ---> "1" DashboardSummary : crée >
+' Vues → EnergyService
+DashboardView "1" ---> "1" EnergyService : consulte >
+BuildingView "1" ---> "1" EnergyService : utilise >
+ConsumptionView "1" ---> "1" EnergyService : utilise >
+ChartView "1" ---> "1" EnergyService : utilise >
+AnalysisView "1" ---> "1" EnergyService : utilise >
 
-' UI
-MainView "*" --> "1" EnergyService : appelle >
-DashboardView "*" --> "1" EnergyService
-BuildingView "*" --> "1" EnergyService
-ConsumptionView "*" --> "1" EnergyService
-ChartView "*" --> "1" EnergyService
-AnalysisView "*" --> "1" EnergyService
+' MainView → autres vues
+MainView "1" ---> "*" DashboardView : crée >
+MainView "1" ---> "*" BuildingView : crée >
+MainView "1" ---> "*" ConsumptionView : crée >
+MainView "1" ---> "*" ChartView : crée >
+MainView "1" ---> "*" AnalysisView : crée >
 
-App "1" --> "1" MainView : lance >
+' Système météo externe
+interface "Open-Meteo API" as MeteoAPI
+EnergyService "1" ---> "1" MeteoAPI : interroge >
+
+note right of MeteoAPI
+  API REST externe
+  api.open-meteo.com
+end note
 
 @enduml
