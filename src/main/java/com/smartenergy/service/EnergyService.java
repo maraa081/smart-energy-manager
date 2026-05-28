@@ -299,7 +299,11 @@ public class EnergyService {
     public TopBuilding getTopBuilding() {
         ensureLoaded();
         return buildings.values().stream()
-                .map(b -> new TopBuilding(b.getNom(), b.getTotalConsommation(), b.getCoutTotal()))
+                .map(b -> new TopBuilding(b.getNom(),
+                        b.getConsommationRecords().stream()
+                                .filter(EnergyService::isEnergie)
+                                .mapToDouble(ConsumptionRecord::getQuantite).sum(),
+                        b.getCoutTotal()))
                 .max(Comparator.comparingDouble(TopBuilding::consommation))
                 .orElse(new TopBuilding("—", 0, 0));
     }
@@ -336,6 +340,7 @@ public class EnergyService {
         YearMonth ymPrev = ym.minusMonths(1);
         for (Building b : buildings.values()) {
             for (ConsumptionRecord r : b.getConsommationRecords()) {
+                if (!isEnergie(r)) continue;
                 YearMonth rm = YearMonth.from(r.getDateHeure());
                 if (rm.equals(ym)) ceMois += r.getQuantite();
                 if (rm.equals(ymPrev)) moisPrec += r.getQuantite();
@@ -348,7 +353,7 @@ public class EnergyService {
         return Trend.STABLE;
     }
 
-    /** Estimation mensuelle (moyenne des 3 derniers mois) */
+    /** Estimation mensuelle énergie (moyenne des 3 derniers mois, hors eau) */
     public double getMonthlyEstimate() {
         ensureLoaded();
         LocalDate now = LocalDate.now();
@@ -359,6 +364,7 @@ public class EnergyService {
             double m = 0;
             for (Building b : buildings.values()) {
                 for (ConsumptionRecord r : b.getConsommationRecords()) {
+                    if (!isEnergie(r)) continue;
                     if (YearMonth.from(r.getDateHeure()).equals(ym)) {
                         m += r.getQuantite();
                     }
@@ -370,7 +376,7 @@ public class EnergyService {
         return months > 0 ? total / months : 0;
     }
 
-    /** Estimation coût mensuel */
+    /** Estimation coût mensuel (toutes énergies) */
     public double getMonthlyCostEstimate() {
         ensureLoaded();
         LocalDate now = LocalDate.now();
@@ -395,12 +401,18 @@ public class EnergyService {
     /** Pics de consommation */
     public record ConsumptionPeak(LocalDate date, double quantite) {}
 
+    /** Helper : vrai si le relevé est une énergie (pas de l'eau) */
+    private static boolean isEnergie(ConsumptionRecord r) {
+        return r.getType() != EnergyType.EAU;
+    }
+
     public List<ConsumptionPeak> getConsumptionPeaks() {
         ensureLoaded();
-        // Group by day, find top 5 days with highest consumption
+        // Group by day, find top 5 days with highest energy consumption (hors eau)
         Map<LocalDate, Double> dailyTotals = new HashMap<>();
         for (Building b : buildings.values()) {
             for (ConsumptionRecord r : b.getConsommationRecords()) {
+                if (!isEnergie(r)) continue;
                 LocalDate d = r.getDateHeure().toLocalDate();
                 dailyTotals.merge(d, r.getQuantite(), Double::sum);
             }
@@ -412,7 +424,7 @@ public class EnergyService {
                 .collect(Collectors.toList());
     }
 
-    /** Anomalies détectées via AnomalyDetector */
+    /** Retourne les anomalies (y compris celles sur l'eau) */
     public List<Anomaly> getAnomalies() {
         ensureLoaded();
         AnomalyDetector detector = new AnomalyDetector(this);
@@ -423,17 +435,20 @@ public class EnergyService {
         return allAnomalies;
     }
 
+
+
     /** Prédiction mois prochain (régression linéaire simple sur 6 mois) */
     public double getNextMonthPrediction() {
         ensureLoaded();
         LocalDate now = LocalDate.now();
-        // Build an array of monthly totals for the last 6 months
+        // Build an array of monthly totals for the last 6 months (énergie hors eau)
         List<Double> monthlyTotals = new ArrayList<>();
         for (int i = 5; i >= 0; i--) {
             YearMonth ym = YearMonth.from(now.minusMonths(i));
             double total = 0;
             for (Building b : buildings.values()) {
                 for (ConsumptionRecord r : b.getConsommationRecords()) {
+                    if (!isEnergie(r)) continue;
                     if (YearMonth.from(r.getDateHeure()).equals(ym)) {
                         total += r.getQuantite();
                     }
@@ -470,6 +485,7 @@ public class EnergyService {
         Map<LocalDate, Double> daily = new HashMap<>();
         List<ConsumptionRecord> records = getConsumptionRecords(buildingId, start, end);
         for (ConsumptionRecord r : records) {
+            if (!isEnergie(r)) continue;
             LocalDate d = r.getDateHeure().toLocalDate();
             daily.merge(d, r.getQuantite(), Double::sum);
         }
@@ -505,6 +521,7 @@ public class EnergyService {
         Map<YearMonth, Double> monthly = new HashMap<>();
         List<ConsumptionRecord> records = getConsumptionRecords(buildingId);
         for (ConsumptionRecord r : records) {
+            if (!isEnergie(r)) continue;
             YearMonth ym = YearMonth.from(r.getDateHeure());
             if (ym.getYear() == year) {
                 monthly.merge(ym, r.getQuantite(), Double::sum);
@@ -528,7 +545,7 @@ public class EnergyService {
             double total = b.getConsommationRecords().stream()
                     .filter(r -> {
                         LocalDate d = r.getDateHeure().toLocalDate();
-                        return !d.isBefore(start) && !d.isAfter(end);
+                        return !d.isBefore(start) && !d.isAfter(end) && isEnergie(r);
                     })
                     .mapToDouble(ConsumptionRecord::getQuantite)
                     .sum();

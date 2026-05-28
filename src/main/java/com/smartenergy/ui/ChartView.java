@@ -238,8 +238,9 @@ public class ChartView extends VBox {
             List<EnergyService.TypeSummary> data = service.getConsumptionByType(
                     selected.getId());
             for (EnergyService.TypeSummary ts : data) {
+                String unite = ts.type().getUnite();
                 chart.getData().add(new PieChart.Data(
-                        ts.type().toString() + " (" + String.format("%.1f", ts.total()) + " kWh)",
+                        ts.type().toString() + " (" + String.format("%.1f", ts.total()) + " " + unite + ")",
                         ts.total()));
             }
         }
