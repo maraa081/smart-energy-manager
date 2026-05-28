@@ -6,3 +6,7 @@ target/
 .idea/
 *.log
 data/
+ml-prediction/venv/
+ml-prediction/__pycache__/
+*.pyc
+ml-prediction/model.pkl

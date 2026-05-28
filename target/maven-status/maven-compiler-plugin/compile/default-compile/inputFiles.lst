@@ -10,6 +10,7 @@
 /tmp/smart-energy-manager/src/main/java/com/smartenergy/service/AnalysisService.java
 /tmp/smart-energy-manager/src/main/java/com/smartenergy/service/AnomalyDetector.java
 /tmp/smart-energy-manager/src/main/java/com/smartenergy/service/EnergyService.java
+/tmp/smart-energy-manager/src/main/java/com/smartenergy/service/PythonPredictor.java
 /tmp/smart-energy-manager/src/main/java/com/smartenergy/service/WeatherService.java
 /tmp/smart-energy-manager/src/main/java/com/smartenergy/ui/AnalysisView.java
 /tmp/smart-energy-manager/src/main/java/com/smartenergy/ui/BuildingView.java

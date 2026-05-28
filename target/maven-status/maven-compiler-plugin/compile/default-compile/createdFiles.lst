@@ -1,9 +1,11 @@
 com/smartenergy/service/EnergyService.class
 com/smartenergy/ui/ConsumptionView$1.class
+com/smartenergy/service/PythonPredictor.class
 com/smartenergy/model/EnergyType.class
 com/smartenergy/model/Anomaly$AnomalyType.class
 com/smartenergy/ui/BuildingView$6.class
 com/smartenergy/ui/AnalysisView.class
+com/smartenergy/service/PythonPredictor$ForestResult.class
 com/smartenergy/service/EnergyService$TopBuilding.class
 com/smartenergy/service/EnergyService$DailyConsumption.class
 com/smartenergy/service/AnalysisService$Trend.class

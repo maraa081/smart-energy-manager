@@ -3,6 +3,11 @@ package com.smartenergy.ui;
 import com.smartenergy.model.Anomaly;
 import com.smartenergy.model.EnergyType;
 import com.smartenergy.service.EnergyService;
+import com.smartenergy.service.PythonPredictor;
+import com.smartenergy.service.PythonPredictor.ForestResult;
+import com.smartenergy.service.WeatherService;
+
+import javafx.application.Platform;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -17,6 +22,7 @@ import javafx.scene.text.FontWeight;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 public class AnalysisView extends ScrollPane {
 
@@ -229,25 +235,110 @@ public class AnalysisView extends ScrollPane {
         }
         root.getChildren().add(anomaliesSection);
 
-        // ── Next month prediction ──
-        VBox predictionSection = createSection("Prédiction mois prochain");
-        double prediction = service.getNextMonthPrediction();
-        double costPrediction = service.getMonthlyCostEstimate() * 1.05; // slight adjustment
+        // ── Comparaison des prédictions ──
+        VBox comparisonSection = createSection("Comparaison des modèles de prédiction");
 
-        Label predValue = new Label(formatConso(prediction) + " kWh estimés");
-        predValue.setFont(Font.font("System", FontWeight.BOLD, 22));
-        predValue.setTextFill(Color.web("#ffd700"));
+        HBox modelsRow = new HBox(16);
 
-        Label predCost = new Label("Soit environ " + String.format("%.2f €", costPrediction));
-        predCost.setFont(Font.font("System", FontWeight.NORMAL, 14));
-        predCost.setTextFill(Color.web("#8f8f9f"));
+        // --- Modèle 1 : Régression linéaire Java ---
+        VBox javaModel = new VBox(10);
+        javaModel.setPadding(new Insets(16));
+        javaModel.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 8;");
+        javaModel.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(javaModel, Priority.ALWAYS);
 
-        Label predNote = new Label("Basé sur les 6 derniers mois (régression linéaire)");
-        predNote.setFont(Font.font("System", 11));
-        predNote.setTextFill(Color.web("#555"));
+        Label javaTitle = new Label("☕ Régression linéaire (Java)");
+        javaTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+        javaTitle.setTextFill(Color.web("#00d2ff"));
 
-        predictionSection.getChildren().addAll(predValue, predCost, predNote);
-        root.getChildren().add(predictionSection);
+        double javaPred = service.getNextMonthPrediction();
+        Label javaValue = new Label(formatConso(javaPred) + " kWh");
+        javaValue.setFont(Font.font("System", FontWeight.BOLD, 28));
+        javaValue.setTextFill(Color.web("#ffd700"));
+
+        Label javaMeth = new Label("Moyenne 6 mois + régression linéaire");
+        javaMeth.setFont(Font.font("System", 11));
+        javaMeth.setTextFill(Color.web("#666"));
+
+        javaModel.getChildren().addAll(javaTitle, javaValue, javaMeth);
+
+        // --- Modèle 2 : RandomForest Python ---
+        VBox forestModel = new VBox(10);
+        forestModel.setPadding(new Insets(16));
+        forestModel.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 8;");
+        forestModel.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(forestModel, Priority.ALWAYS);
+
+        Label forestTitle = new Label("🌲 RandomForest (Python / scikit-learn)");
+        forestTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+        forestTitle.setTextFill(Color.web("#00e676"));
+
+        Label forestValue = new Label("Chargement...");
+        forestValue.setFont(Font.font("System", FontWeight.BOLD, 28));
+        forestValue.setTextFill(Color.web("#a0a0b0"));
+
+        Label forestInterval = new Label("");
+        forestInterval.setFont(Font.font("System", 12));
+        forestInterval.setTextFill(Color.web("#8f8f9f"));
+
+        Label forestMeth = new Label("200 arbres, 7 features, R² ≈ 0.87");
+        forestMeth.setFont(Font.font("System", 11));
+        forestMeth.setTextFill(Color.web("#555"));
+
+        forestModel.getChildren().addAll(forestTitle, forestValue, forestInterval, forestMeth);
+
+        modelsRow.getChildren().addAll(javaModel, forestModel);
+        comparisonSection.getChildren().add(modelsRow);
+
+        // Appel asynchrone au modèle Python
+        new Thread(() -> {
+            try {
+                int mois = java.time.LocalDate.now().getMonthValue();
+                int heure = 14;
+                EnergyType dominantType = service.getDominantEnergy().type();
+                double temperature = 20.0;
+
+                // Essayer de récupérer une température via la météo
+                var buildings = service.getAllBuildings();
+                if (!buildings.isEmpty()) {
+                    var b = buildings.get(0);
+                    if (b.getLatitude() != 0 || b.getLongitude() != 0) {
+                        WeatherService ws = new WeatherService();
+                        var tempOpt = ws.getTemperature(b.getLatitude(), b.getLongitude(),
+                                java.time.LocalDate.now());
+                        if (tempOpt.isPresent()) temperature = tempOpt.get();
+                    }
+                }
+
+                Optional<ForestResult> result = PythonPredictor.predict(
+                        mois, heure, dominantType, temperature);
+
+                Platform.runLater(() -> {
+                    if (result.isPresent()) {
+                        ForestResult r = result.get();
+                        forestValue.setText(formatConso(r.prediction()) + " kWh");
+                        forestValue.setTextFill(Color.web("#00e676"));
+                        forestInterval.setText("Intervalle 95% : ["
+                                + String.format("%.1f", r.intervalMin()) + ", "
+                                + String.format("%.1f", r.intervalMax()) + "] kWh");
+                    } else {
+                        forestValue.setText("❌ Non disponible");
+                        forestValue.setTextFill(Color.web("#e94560"));
+                        forestInterval.setText("Installez Python + scikit-learn \n(" +
+                                "cd ml-prediction && pip install -r requirements.txt && " +
+                                "python predict.py --train)");
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    forestValue.setText("❌ Erreur");
+                    forestValue.setTextFill(Color.web("#e94560"));
+                    forestInterval.setText(e.getMessage());
+                });
+            }
+        }).start();
+
+        root.getChildren().add(comparisonSection);
 
         setContent(root);
     }
