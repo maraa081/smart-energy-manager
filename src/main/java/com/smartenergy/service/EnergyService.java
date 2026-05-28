@@ -41,6 +41,12 @@ public class EnergyService {
             try {
                 buildings = repository.loadAll();
                 loaded = true;
+                // Migration : corriger les unités des anciennes données
+                int fixes = migrerUnites();
+                if (fixes > 0) {
+                    persist();
+                    System.out.println("✔ " + fixes + " relevés migrés (unités corrigées)");
+                }
                 System.out.println("✔ " + buildings.size() + " bâtiments chargés depuis : "
                         + repository.getDataFilePath());
             } catch (Exception e) {
@@ -65,6 +71,24 @@ public class EnergyService {
                 loaded = true;
             }
         }
+    }
+
+    /**
+     * Corrige les unités des relevés existants (migration des anciennes données
+     * où tout était en "kWh", y compris l'eau).
+     */
+    private int migrerUnites() {
+        int fixes = 0;
+        for (Building b : buildings.values()) {
+            for (ConsumptionRecord r : b.getConsommationRecords()) {
+                String bonneUnite = r.getType().getUnite();
+                if (!bonneUnite.equals(r.getUnite())) {
+                    r.setUnite(bonneUnite);
+                    fixes++;
+                }
+            }
+        }
+        return fixes;
     }
 
     private void persist() {
