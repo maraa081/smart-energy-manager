@@ -1,6 +1,7 @@
 package com.smartenergy.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -68,18 +69,21 @@ public class Building {
 
     // --- Helpers ---
 
+    @JsonIgnore
     public double getTotalConsommation() {
         return consommationRecords.stream()
                 .mapToDouble(ConsumptionRecord::getQuantite)
                 .sum();
     }
 
+    @JsonIgnore
     public double getCoutTotal() {
         return consommationRecords.stream()
                 .mapToDouble(ConsumptionRecord::getCoutEstime)
                 .sum();
     }
 
+    @JsonIgnore
     public int getNombreReleves() {
         return consommationRecords.size();
     }
@@ -90,8 +94,11 @@ public class Building {
 
     // --- Record-style accessors (for compat with other services) ---
 
+    @JsonIgnore
     public String id()  { return id; }
+    @JsonIgnore
     public String nom() { return nom; }
+    @JsonIgnore
     public List<ConsumptionRecord> consommations() { return consommationRecords; }
 
     @Override

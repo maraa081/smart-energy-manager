@@ -2,6 +2,7 @@ com/smartenergy/service/EnergyService.class
 com/smartenergy/ui/ConsumptionView$1.class
 com/smartenergy/model/EnergyType.class
 com/smartenergy/model/Anomaly$AnomalyType.class
+com/smartenergy/ui/BuildingView$6.class
 com/smartenergy/ui/AnalysisView.class
 com/smartenergy/service/EnergyService$TopBuilding.class
 com/smartenergy/service/EnergyService$DailyConsumption.class
@@ -14,6 +15,7 @@ com/smartenergy/service/EnergyService$MonthlySummary.class
 com/smartenergy/ui/MainView.class
 com/smartenergy/model/Anomaly.class
 com/smartenergy/ui/ConsumptionView.class
+com/smartenergy/ui/BuildingView$5.class
 com/smartenergy/ui/ConsumptionView$3.class
 com/smartenergy/App.class
 com/smartenergy/model/ConsumptionRecord.class

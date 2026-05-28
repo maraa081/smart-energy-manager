@@ -17,7 +17,7 @@ public class EnergyService {
 
     private static EnergyService instance;
 
-    private final JsonRepository repository;
+    private JsonRepository repository;
     private Map<String, Building> buildings;
     private boolean loaded = false;
 
@@ -41,8 +41,27 @@ public class EnergyService {
             try {
                 buildings = repository.loadAll();
                 loaded = true;
-            } catch (IOException e) {
-                buildings = new HashMap<>();
+                System.out.println("✔ " + buildings.size() + " bâtiments chargés depuis : "
+                        + repository.getDataFilePath());
+            } catch (Exception e) {
+                System.err.println("⚠ Erreur chargement données : " + e.getMessage());
+                System.err.println("→ Réinitialisation avec données d'exemple...");
+                // Si le fichier est corrompu, on le supprime et on reseed
+                try {
+                    java.nio.file.Files.deleteIfExists(
+                            java.nio.file.Paths.get(repository.getDataFilePath()));
+                } catch (java.io.IOException ignored) {}
+                // Force reseed en recréant le repository
+                this.repository = JsonRepository.configure(repository.getDataFilePath());
+                // Maintenant on recharge
+                try {
+                    buildings = repository.loadAll();
+                    System.out.println("✔ " + buildings.size() + " bâtiments regénérés");
+                } catch (IOException e2) {
+                    System.err.println("⚠ Échec reseed : " + e2.getMessage());
+                    System.err.println("→ Création d'un jeu vierge");
+                    buildings = new HashMap<>();
+                }
                 loaded = true;
             }
         }

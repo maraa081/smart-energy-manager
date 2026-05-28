@@ -1,5 +1,6 @@
 package com.smartenergy.data;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -37,6 +38,7 @@ public class JsonRepository {
         this.objectMapper.registerModule(new JavaTimeModule());
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         this.dataFile = new File(filePath);
 
         // Ensure parent directory exists
@@ -157,9 +159,11 @@ public class JsonRepository {
 
     /**
      * Reconfigure le chemin du fichier de données (utile pour les tests).
+     * Retourne la nouvelle instance.
      */
-    public static synchronized void configure(String filePath) {
+    public static synchronized JsonRepository configure(String filePath) {
         instance = new JsonRepository(filePath);
+        return instance;
     }
 
     /**
