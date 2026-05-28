@@ -5,7 +5,6 @@ import com.smartenergy.model.EnergyType;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -21,31 +20,26 @@ public class PythonPredictor {
     private static final String ML_DIR = "ml-prediction";
     private static final String SCRIPT = "predict.py";
 
-    /**
-     * Résultat d'une prédiction RandomForest.
-     */
     public record ForestResult(double prediction, double intervalMin, double intervalMax) {}
 
     /**
      * Appelle le modèle RandomForest et retourne la prédiction.
-     *
-     * @param mois        mois (1-12)
-     * @param heure       heure (0-23)
-     * @param type        type d'énergie
-     * @param temperature température extérieure estimée (°C)
-     * @return le résultat de la prédiction, ou {@link Optional#empty()} si le script est indisponible
      */
     public static Optional<ForestResult> predict(int mois, int heure, EnergyType type, double temperature) {
         try {
-            // Chercher le script predict.py dans le projet ou aux alentours
+            // 1. Trouver le script predict.py
             File script = findScript();
             if (script == null) {
+                System.err.println("⚠ [PythonPredictor] predict.py introuvable");
                 return Optional.empty();
             }
+            System.out.println("ℹ [PythonPredictor] Script trouvé : " + script.getAbsolutePath());
 
-            // Détection auto : venv, Windows, ou python3 système
+            // 2. Trouver la commande Python
             String pythonCmd = detectPythonCommand(script.getParentFile());
+            System.out.println("ℹ [PythonPredictor] Commande Python : " + pythonCmd);
 
+            // 3. Lancer le processus
             ProcessBuilder pb = new ProcessBuilder(
                     pythonCmd, script.getAbsolutePath(),
                     "--predict",
@@ -55,7 +49,6 @@ public class PythonPredictor {
                     "--temperature", String.format("%.1f", temperature)
             );
 
-            // Répertoire de travail = dossier contenant predict.py et model.pkl
             pb.directory(script.getParentFile());
             pb.redirectErrorStream(true);
 
@@ -69,25 +62,28 @@ public class PythonPredictor {
             }
 
             int exitCode = process.waitFor();
+            String fullOutput = output.toString();
+
             if (exitCode != 0) {
-                System.err.println("⚠ Python predict.py exited with code " + exitCode);
+                System.err.println("⚠ [PythonPredictor] Exit code " + exitCode);
+                System.err.println("   Output: " + (fullOutput.length() > 200 ? fullOutput.substring(0, 200) : fullOutput));
                 return Optional.empty();
             }
 
-            // Parser la sortie pour extraire prediction et intervalle
-            return parseOutput(output.toString());
+            System.out.println("ℹ [PythonPredictor] Sortie : " + fullOutput.replace("\n", " | "));
+
+            // 4. Parser la sortie
+            return parseOutput(fullOutput);
 
         } catch (Exception e) {
-            System.err.println("⚠ Erreur appel Python : " + e.getMessage());
+            System.err.println("⚠ [PythonPredictor] Erreur : " + e.getClass().getSimpleName() + " - " + e.getMessage());
             return Optional.empty();
         }
     }
 
     /**
      * Parse la sortie du script predict.py.
-     * Format attendu :
-     *   ⚡ X.XX kWh estimés
-     *   📊 Intervalle de confiance (95%) : [X.XX, X.XX] kWh
+     * Format : "⚡ X.XX kWh estimés" + "Intervalle ... [X.XX, X.XX]"
      */
     private static Optional<ForestResult> parseOutput(String output) {
         try {
@@ -96,34 +92,11 @@ public class PythonPredictor {
             double intervalMax = 0;
 
             for (String line : output.split("\n")) {
-                // Ligne contenant la prédiction
-                if (line.contains("kWh estimés")) {
-                    // Extrait : "   ⚡ 12.45 kWh estimés"
-                    String cleaned = line.replaceAll("[^0-9.,]", " ").trim();
-                    String[] parts = cleaned.split("\\s+");
-                    prediction = Double.parseDouble(parts[0].replace(",", "."));
-                }
-                // Ligne contenant l'intervalle
-                if (line.contains("Intervalle") && line.contains("[")) {
-                    // Extrait : "   📊 Intervalle de confiance (95%) : [10.2, 14.7] kWh"
-                    int start = line.indexOf("[");
-                    int end = line.indexOf("]");
-                    if (start >= 0 && end > start) {
-                        String interval = line.substring(start + 1, end);
-                        String[] vals = interval.split(",");
-                        intervalMin = Double.parseDouble(vals[0].trim().replace(",", "."));
-                        intervalMax = Double.parseDouble(vals[1].trim().replace(",", "."));
-                    }
-                }
-            }
+                line = line.trim();
 
-            if (prediction > 0) {
-                return Optional.of(new ForestResult(prediction, intervalMin, intervalMax));
-            }
-
-            // Fallback : essayer de trouver un nombre après ⚡
-            for (String line : output.split("\n")) {
-                if (line.contains("⚡")) {
+                // Ligne : "⚡ 6.56 kWh estimés"
+                if (line.contains("kWh estimés") || line.contains("kWh estime")) {
+                    // Extrait le premier nombre
                     String cleaned = line.replaceAll("[^0-9.,]", " ").trim();
                     String[] parts = cleaned.split("\\s+");
                     for (String p : parts) {
@@ -133,49 +106,114 @@ public class PythonPredictor {
                         }
                     }
                 }
-                if (prediction > 0) break;
+
+                // Ligne : "Intervalle de confiance (95%) : [4.31, 8.82]"
+                if (line.contains("Intervalle") || line.contains("intervalle")) {
+                    int start = line.indexOf("[");
+                    int end = line.indexOf("]");
+                    if (start >= 0 && end > start) {
+                        String interval = line.substring(start + 1, end);
+                        String[] vals = interval.split(",");
+                        if (vals.length >= 2) {
+                            intervalMin = Double.parseDouble(vals[0].trim().replace(",", "."));
+                            intervalMax = Double.parseDouble(vals[1].trim().replace(",", "."));
+                        }
+                    }
+                }
             }
 
             if (prediction > 0) {
-                return Optional.of(new ForestResult(prediction, prediction * 0.8, prediction * 1.2));
+                if (intervalMin == 0 && intervalMax == 0) {
+                    intervalMin = prediction * 0.7;
+                    intervalMax = prediction * 1.3;
+                }
+                return Optional.of(new ForestResult(prediction, intervalMin, intervalMax));
             }
 
+            System.err.println("⚠ [PythonPredictor] Aucune prédiction trouvée dans la sortie");
             return Optional.empty();
 
         } catch (Exception e) {
-            System.err.println("⚠ Erreur parsing sortie Python : " + e.getMessage());
+            System.err.println("⚠ [PythonPredictor] Erreur parsing : " + e.getMessage());
             return Optional.empty();
         }
     }
 
     /**
-     * Détecte la commande Python à utiliser (venv, Windows, ou système).
+     * Détecte la commande Python utilisable.
      */
     private static String detectPythonCommand(File scriptDir) {
         boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
 
-        // 1. Venv (Linux / Mac)
+        // 1. Venv Linux
         File linuxVenv = new File(scriptDir, "venv/bin/python3");
         if (linuxVenv.exists()) return linuxVenv.getAbsolutePath();
 
-        // 2. Venv (Windows)
+        // 2. Venv Windows
         File winVenv = new File(scriptDir, "venv/Scripts/python.exe");
         if (winVenv.exists()) return winVenv.getAbsolutePath();
 
-        // 3. Commande système selon OS
-        return isWindows ? "python" : "python3";
+        // 3. Windows : essayer "python" puis "py"
+        if (isWindows) {
+            // Essayer de trouver le chemin complet via where
+            String fullPath = findWindowsPython("python");
+            if (fullPath != null) return fullPath;
+
+            fullPath = findWindowsPython("py");
+            if (fullPath != null) return fullPath;
+
+            // Fallback : chemins classiques d'installation
+            String[] commonPaths = {
+                System.getenv("LOCALAPPDATA") + "/Programs/Python/Python314/python.exe",
+                System.getenv("LOCALAPPDATA") + "/Programs/Python/Python313/python.exe",
+                System.getenv("LOCALAPPDATA") + "/Programs/Python/Python312/python.exe",
+                "C:/Python314/python.exe",
+                "C:/Python313/python.exe",
+                "C:/Python312/python.exe",
+            };
+            for (String p : commonPaths) {
+                File f = new File(p);
+                if (f.exists()) return f.getAbsolutePath();
+            }
+
+            return "python"; // dernier recours
+        }
+
+        return "python3";
     }
 
     /**
-     * Cherche le script predict.py dans le répertoire courant, le répertoire parent,
-     * et le user.dir.
+     * Windows : exécute "where <cmd>" pour trouver le chemin complet.
+     */
+    private static String findWindowsPython(String cmd) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "where", cmd);
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                String line = r.readLine();
+                if (line != null && !line.isEmpty()) {
+                    File f = new File(line.trim());
+                    if (f.exists()) return f.getAbsolutePath();
+                }
+            }
+            p.waitFor();
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    /**
+     * Cherche le script predict.py dans différents endroits.
      */
     private static File findScript() {
-        // Chemins à essayer
+        String userDir = System.getProperty("user.dir");
+
         String[] candidates = {
-            ML_DIR + "/" + SCRIPT,                                          // ml-prediction/predict.py
-            "../" + ML_DIR + "/" + SCRIPT,                                  // ../ml-prediction/predict.py
-            Paths.get(System.getProperty("user.dir"), ML_DIR, SCRIPT).toString(),  // CWD/ml-prediction/predict.py
+            ML_DIR + "/" + SCRIPT,
+            ML_DIR + "\\" + SCRIPT,
+            "../" + ML_DIR + "/" + SCRIPT,
+            userDir + "/" + ML_DIR + "/" + SCRIPT,
+            userDir + "\\" + ML_DIR + "\\" + SCRIPT,
             System.getProperty("user.home") + "/smart-energy-manager/" + ML_DIR + "/" + SCRIPT,
         };
 
@@ -185,6 +223,8 @@ public class PythonPredictor {
                 return f;
             }
         }
+
+        System.err.println("⚠ [PythonPredictor] predict.py introuvable (user.dir=" + userDir + ")");
         return null;
     }
 }
