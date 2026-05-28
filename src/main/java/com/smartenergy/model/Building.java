@@ -15,6 +15,8 @@ public class Building {
     private String adresse;
     private double surface;
     private BuildingType type;
+    private double latitude;
+    private double longitude;
     private final List<ConsumptionRecord> consommationRecords;
 
     public Building() {
@@ -29,12 +31,16 @@ public class Building {
             @JsonProperty("adresse") String adresse,
             @JsonProperty("surface") double surface,
             @JsonProperty("type") BuildingType type,
+            @JsonProperty("latitude") double latitude,
+            @JsonProperty("longitude") double longitude,
             @JsonProperty("consommationRecords") List<ConsumptionRecord> consommationRecords) {
         this.id = id;
         this.nom = nom;
         this.adresse = adresse;
         this.surface = surface;
         this.type = type;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.consommationRecords = consommationRecords != null
                 ? new ArrayList<>(consommationRecords) : new ArrayList<>();
     }
@@ -46,6 +52,8 @@ public class Building {
     public String getAdresse()                      { return adresse; }
     public double getSurface()                      { return surface; }
     public BuildingType getType()                   { return type; }
+    public double getLatitude()                     { return latitude; }
+    public double getLongitude()                    { return longitude; }
     public List<ConsumptionRecord> getConsommationRecords() { return consommationRecords; }
 
     // --- Setters ---
@@ -55,6 +63,8 @@ public class Building {
     public void setAdresse(String adresse)          { this.adresse = adresse; }
     public void setSurface(double surface)          { this.surface = surface; }
     public void setType(BuildingType type)          { this.type = type; }
+    public void setLatitude(double latitude)        { this.latitude = latitude; }
+    public void setLongitude(double longitude)      { this.longitude = longitude; }
 
     // --- Helpers ---
 

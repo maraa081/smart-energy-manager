@@ -127,6 +127,8 @@ public class EnergyService {
         b.setAdresse(adresse);
         b.setSurface(surface);
         b.setType(type);
+        b.setLatitude(48.8566);  // Paris par défaut
+        b.setLongitude(2.3522);
         return b;
     }
 
@@ -352,36 +354,15 @@ public class EnergyService {
                 .collect(Collectors.toList());
     }
 
-    /** Anomalies détectées */
+    /** Anomalies détectées via AnomalyDetector */
     public List<Anomaly> getAnomalies() {
         ensureLoaded();
-        List<Anomaly> anomalies = new ArrayList<>();
-        double globalMean = 0;
-        long count = 0;
+        AnomalyDetector detector = new AnomalyDetector(this);
+        List<Anomaly> allAnomalies = new ArrayList<>();
         for (Building b : buildings.values()) {
-            for (ConsumptionRecord r : b.getConsommationRecords()) {
-                globalMean += r.getQuantite();
-                count++;
-            }
+            allAnomalies.addAll(detector.detectAnomalies(b.getId()));
         }
-        if (count == 0) return anomalies;
-        globalMean /= count;
-
-        // Detect peaks (2.5x the mean)
-        for (Building b : buildings.values()) {
-            for (ConsumptionRecord r : b.getConsommationRecords()) {
-                if (r.getQuantite() > globalMean * 2.5) {
-                    anomalies.add(new Anomaly(
-                            "Pic anormal : " + String.format("%.1f", r.getQuantite())
-                                    + " " + r.getUnite() + " (" + r.getType() + ")",
-                            r.getDateHeure(),
-                            Anomaly.AnomalyType.PIC_CONSOMMATION,
-                            r.getQuantite() - globalMean
-                    ));
-                }
-            }
-        }
-        return anomalies;
+        return allAnomalies;
     }
 
     /** Prédiction mois prochain (régression linéaire simple sur 6 mois) */

@@ -1,8 +1,11 @@
 package com.smartenergy.ui;
 
 import com.smartenergy.model.Anomaly;
+import com.smartenergy.model.Building;
 import com.smartenergy.service.EnergyService;
+import com.smartenergy.service.WeatherService;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -15,10 +18,12 @@ import javafx.scene.text.TextAlignment;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 public class DashboardView extends ScrollPane {
 
     private final EnergyService service = EnergyService.getInstance();
+    private final WeatherService weatherService = new WeatherService();
     private EnergyService.DashboardSummary lastSummary;
 
     public DashboardView() {
@@ -51,6 +56,72 @@ public class DashboardView extends ScrollPane {
 
         lastSummary = service.getDashboardSummary();
 
+        // ── Weather Section ──
+        VBox weatherSection = new VBox(6);
+        weatherSection.setPadding(new Insets(16));
+        weatherSection.setStyle(
+                "-fx-background-color: #0f3460;" +
+                "-fx-background-radius: 12;" +
+                "-fx-border-radius: 12;"
+        );
+
+        Label weatherTitle = new Label("☀️ Météo du jour & alertes");
+        weatherTitle.setFont(Font.font("System", FontWeight.SEMI_BOLD, 15));
+        weatherTitle.setTextFill(Color.web("#00d2ff"));
+        weatherSection.getChildren().add(weatherTitle);
+
+        Label weatherInfo = new Label("Chargement de la météo...");
+        weatherInfo.setFont(Font.font("System", 13));
+        weatherInfo.setTextFill(Color.web("#a0a0b0"));
+        weatherSection.getChildren().add(weatherInfo);
+
+        root.getChildren().add(weatherSection);
+
+        // Fetch weather in background
+        new Thread(() -> {
+            try {
+                Building firstBuilding = service.getAllBuildings().stream().findFirst().orElse(null);
+                java.time.LocalDate today = java.time.LocalDate.now();
+
+                if (firstBuilding != null && firstBuilding.getLatitude() != 0 && firstBuilding.getLongitude() != 0) {
+                    double lat = firstBuilding.getLatitude();
+                    double lon = firstBuilding.getLongitude();
+
+                    Optional<Double> temp = weatherService.getTemperature(lat, lon, today);
+                    String alert = weatherService.getWeatherAlert(lat, lon);
+
+                    StringBuilder sb = new StringBuilder();
+                    if (temp.isPresent()) {
+                        sb.append("🌡️ ").append(String.format("%.1f", temp.get())).append("°C");
+                    }
+                    if (!alert.isEmpty()) {
+                        sb.append("  |  ").append(alert);
+                    }
+                    if (sb.isEmpty()) {
+                        sb.append("📍 Météo non disponible pour ce bâtiment");
+                    }
+
+                    String finalText = sb.toString();
+                    Platform.runLater(() -> {
+                        weatherInfo.setText(finalText);
+                        if (!alert.isEmpty()) {
+                            weatherInfo.setTextFill(Color.web("#e94560"));
+                        } else {
+                            weatherInfo.setTextFill(Color.web("#a0a0b0"));
+                        }
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        weatherInfo.setText("📍 Ajoutez un bâtiment avec des coordonnées GPS pour voir la météo");
+                    });
+                }
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    weatherInfo.setText("⚠️ Météo indisponible (vérifiez votre connexion)");
+                });
+            }
+        }).start();
+
         // ── Metric Cards ──
         HBox metricsRow = new HBox(16);
         metricsRow.setAlignment(Pos.CENTER);
@@ -69,7 +140,7 @@ public class DashboardView extends ScrollPane {
 
         root.getChildren().add(metricsRow);
 
-        // ── Top Building ──
+        // ── Top Building + Trend + Weather Correlation ──
         HBox topBuildingRow = new HBox(16);
 
         VBox topBuildingCard = new VBox(8);
@@ -96,7 +167,7 @@ public class DashboardView extends ScrollPane {
 
         topBuildingCard.getChildren().addAll(buildingLabel, buildingName, buildingConso);
 
-        // ── Trend mini-chart (placeholder) ──
+        // ── Trend card ──
         VBox trendCard = new VBox(8);
         trendCard.setPadding(new Insets(20));
         trendCard.setStyle(

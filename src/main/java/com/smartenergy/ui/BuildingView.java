@@ -214,6 +214,14 @@ public class BuildingView extends VBox {
         tfSurface.setPromptText("Surface (m²)");
         tfSurface.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white; -fx-prompt-text-fill: #666;");
 
+        TextField tfLat = new TextField(existing != null ? String.valueOf(existing.getLatitude()) : "");
+        tfLat.setPromptText("Latitude (ex: 48.8566)");
+        tfLat.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white; -fx-prompt-text-fill: #666;");
+
+        TextField tfLon = new TextField(existing != null ? String.valueOf(existing.getLongitude()) : "");
+        tfLon.setPromptText("Longitude (ex: 2.3522)");
+        tfLon.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white; -fx-prompt-text-fill: #666;");
+
         ComboBox<BuildingType> cbType = new ComboBox<>(
                 FXCollections.observableArrayList(BuildingType.values()));
         cbType.setValue(existing != null ? existing.getType() : BuildingType.MAISON);
@@ -237,11 +245,23 @@ public class BuildingView extends VBox {
         }}, 0, 2);
         grid.add(tfSurface, 1, 2);
 
-        grid.add(new Label("Type :") {{
+        grid.add(new Label("Latitude :") {{
             setTextFill(Color.web("#a0a0b0"));
             setStyle("-fx-font-size: 13px;");
         }}, 0, 3);
-        grid.add(cbType, 1, 3);
+        grid.add(tfLat, 1, 3);
+
+        grid.add(new Label("Longitude :") {{
+            setTextFill(Color.web("#a0a0b0"));
+            setStyle("-fx-font-size: 13px;");
+        }}, 0, 4);
+        grid.add(tfLon, 1, 4);
+
+        grid.add(new Label("Type :") {{
+            setTextFill(Color.web("#a0a0b0"));
+            setStyle("-fx-font-size: 13px;");
+        }}, 0, 5);
+        grid.add(cbType, 1, 5);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -256,6 +276,19 @@ public class BuildingView extends VBox {
                     showWarning("La surface doit être un nombre valide.");
                     return null;
                 }
+                double lat = 48.8566;
+                double lon = 2.3522;
+                try {
+                    if (!tfLat.getText().trim().isEmpty()) {
+                        lat = Double.parseDouble(tfLat.getText().trim());
+                    }
+                    if (!tfLon.getText().trim().isEmpty()) {
+                        lon = Double.parseDouble(tfLon.getText().trim());
+                    }
+                } catch (NumberFormatException e) {
+                    showWarning("Latitude/Longitude invalide.");
+                    return null;
+                }
                 BuildingType type = cbType.getValue();
 
                 Building b;
@@ -264,9 +297,13 @@ public class BuildingView extends VBox {
                     b.setNom(nom);
                     b.setAdresse(adresse);
                     b.setSurface(surface);
+                    b.setLatitude(lat);
+                    b.setLongitude(lon);
                     b.setType(type);
                 } else {
                     b = service.createBuilding(nom, adresse, surface, type);
+                    b.setLatitude(lat);
+                    b.setLongitude(lon);
                 }
                 return b;
             }
