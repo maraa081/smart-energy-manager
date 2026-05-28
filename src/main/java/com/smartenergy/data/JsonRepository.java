@@ -109,10 +109,10 @@ public class JsonRepository {
             samples.put(commerce.getId(), commerce);
 
             saveAll(samples);
-            System.out.println("✔ Données d'exemple créées dans : " + dataFile.getAbsolutePath());
+            System.out.println("[OK]  Données d'exemple créées dans : " + dataFile.getAbsolutePath());
 
         } catch (IOException e) {
-            System.err.println("⚠ Impossible de créer les données d'exemple : " + e.getMessage());
+            System.err.println(" Impossible de créer les données d'exemple : " + e.getMessage());
         }
     }
 

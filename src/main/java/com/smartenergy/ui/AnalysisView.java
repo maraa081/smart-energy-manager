@@ -198,7 +198,7 @@ public class AnalysisView extends ScrollPane {
         List<Anomaly> anomalies = service.getAnomalies();
 
         if (anomalies.isEmpty()) {
-            Label noAnomalies = new Label("✅ Aucune anomalie détectée");
+            Label noAnomalies = new Label("[OK]  Aucune anomalie détectée");
             noAnomalies.setFont(Font.font("System", 14));
             noAnomalies.setTextFill(Color.web("#00e676"));
             anomaliesSection.getChildren().add(noAnomalies);
@@ -240,7 +240,7 @@ public class AnalysisView extends ScrollPane {
         root.getChildren().add(anomaliesSection);
 
         // ── Comparaison des prédictions ──
-        VBox comparisonSection = createSection("🌲 Comparaison : Régression linéaire vs RandomForest");
+        VBox comparisonSection = createSection("[Foret]  Comparaison : Régression linéaire vs RandomForest");
         HBox modelsRow = new HBox(16);
 
         // Modèle 1 : Java
@@ -249,7 +249,7 @@ public class AnalysisView extends ScrollPane {
         javaModel.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 8;");
         javaModel.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(javaModel, Priority.ALWAYS);
-        Label javaTitle = new Label("☕ Régression linéaire (Java)");
+        Label javaTitle = new Label("[Java]  Régression linéaire (Java)");
         javaTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
         javaTitle.setTextFill(Color.web("#00d2ff"));
         double javaPred = service.getNextMonthPrediction();
@@ -267,7 +267,7 @@ public class AnalysisView extends ScrollPane {
         forestModel.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 8;");
         forestModel.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(forestModel, Priority.ALWAYS);
-        Label forestTitle = new Label("🌲 RandomForest (Python)");
+        Label forestTitle = new Label("[Foret]  RandomForest (Python)");
         forestTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
         forestTitle.setTextFill(Color.web("#00e676"));
         forestValue = new Label("Chargement...");
@@ -343,14 +343,14 @@ public class AnalysisView extends ScrollPane {
                                 + String.format("%.1f", r.intervalMin()) + ", "
                                 + String.format("%.1f", r.intervalMax()) + "] kWh");
                     } else {
-                        forestValue.setText("❌ Non disponible");
+                        forestValue.setText(" Non disponible");
                         forestValue.setTextFill(Color.web("#e94560"));
                         forestInterval.setText("Vérifiez que Python est installé");
                     }
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    forestValue.setText("❌ Erreur");
+                    forestValue.setText(" Erreur");
                     forestValue.setTextFill(Color.web("#e94560"));
                     forestInterval.setText(e.getMessage());
                 });

@@ -65,7 +65,7 @@ public class DashboardView extends ScrollPane {
                 "-fx-border-radius: 12;"
         );
 
-        Label weatherTitle = new Label("☀️ Météo du jour & alertes");
+        Label weatherTitle = new Label("[Meteo]  Météo du jour & alertes");
         weatherTitle.setFont(Font.font("System", FontWeight.SEMI_BOLD, 15));
         weatherTitle.setTextFill(Color.web("#00d2ff"));
         weatherSection.getChildren().add(weatherTitle);
@@ -92,13 +92,13 @@ public class DashboardView extends ScrollPane {
 
                     StringBuilder sb = new StringBuilder();
                     if (temp.isPresent()) {
-                        sb.append("🌡️ ").append(String.format("%.1f", temp.get())).append("°C");
+                        sb.append(" ").append(String.format("%.1f", temp.get())).append("°C");
                     }
                     if (!alert.isEmpty()) {
                         sb.append("  |  ").append(alert);
                     }
                     if (sb.isEmpty()) {
-                        sb.append("📍 Météo non disponible pour ce bâtiment");
+                        sb.append(" Météo non disponible pour ce bâtiment");
                     }
 
                     String finalText = sb.toString();
@@ -112,12 +112,12 @@ public class DashboardView extends ScrollPane {
                     });
                 } else {
                     Platform.runLater(() -> {
-                        weatherInfo.setText("📍 Ajoutez un bâtiment avec des coordonnées GPS pour voir la météo");
+                        weatherInfo.setText(" Ajoutez un bâtiment avec des coordonnées GPS pour voir la météo");
                     });
                 }
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    weatherInfo.setText("⚠️ Météo indisponible (vérifiez votre connexion)");
+                    weatherInfo.setText("[ATTENTION]  Météo indisponible (vérifiez votre connexion)");
                 });
             }
         }).start();
@@ -234,7 +234,7 @@ public class DashboardView extends ScrollPane {
         }
 
         if (alerts.isEmpty()) {
-            Label noAlerts = new Label("✅ Aucune anomalie détectée");
+            Label noAlerts = new Label("[OK]  Aucune anomalie détectée");
             noAlerts.setFont(Font.font("System", 14));
             noAlerts.setTextFill(Color.web("#00e676"));
             noAlerts.setPadding(new Insets(10, 0, 0, 0));
@@ -251,7 +251,7 @@ public class DashboardView extends ScrollPane {
                         "-fx-border-radius: 8;"
                 );
 
-                Label iconLabel = new Label("⚠");
+                Label iconLabel = new Label("");
                 iconLabel.setFont(Font.font("System", 18));
 
                 VBox textBox = new VBox(2);

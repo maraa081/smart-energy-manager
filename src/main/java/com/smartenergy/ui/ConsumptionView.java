@@ -105,8 +105,8 @@ public class ConsumptionView extends VBox {
         actions.setAlignment(Pos.CENTER_LEFT);
 
         Button btnAjouter = createButton("+ Ajouter relevé", "#00d2ff");
-        Button btnImporter = createButton("📁 Importer CSV", "#ffd700");
-        Button btnGenerer = createButton("🎲 Générer données test", "#00e676");
+        Button btnImporter = createButton(" Importer CSV", "#ffd700");
+        Button btnGenerer = createButton(" Générer données test", "#00e676");
 
         btnAjouter.setOnAction(e -> ajouterReleve());
         btnImporter.setOnAction(e -> importerCsv());

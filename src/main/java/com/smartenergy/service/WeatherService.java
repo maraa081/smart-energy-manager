@@ -59,10 +59,10 @@ public class WeatherService {
                     ? root.path("daily").path("precipitation_sum").get(1).asDouble(0) : 0;
 
             java.util.List<String> alerts = new java.util.ArrayList<>();
-            if (temp > 35 || maxTempTomorrow > 35) alerts.add("⚠️ Alerte canicule : température > 35°C");
-            if (temp < -5 || maxTempTomorrow < -5) alerts.add("❄️ Alerte gel : température < -5°C");
-            if (precip > 20 || precipTomorrow > 20) alerts.add("🌧️ Fortes précipitations (> 20 mm)");
-            if (isSevereWeatherCode(weatherCode)) alerts.add("⛈️ Conditions météo sévères");
+            if (temp > 35 || maxTempTomorrow > 35) alerts.add("[ATTENTION]  Alerte canicule : température > 35°C");
+            if (temp < -5 || maxTempTomorrow < -5) alerts.add("Alerte gel : température < -5°C");
+            if (precip > 20 || precipTomorrow > 20) alerts.add("[Pluie]  Fortes précipitations (> 20 mm)");
+            if (isSevereWeatherCode(weatherCode)) alerts.add("Conditions météo sévères");
 
             return String.join(" | ", alerts);
         } catch (Exception e) { return ""; }

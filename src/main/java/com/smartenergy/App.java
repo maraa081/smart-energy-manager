@@ -29,7 +29,7 @@ public class App extends Application {
         if (cssUrl != null) {
             scene.getStylesheets().add(cssUrl.toExternalForm());
         } else {
-            System.err.println("⚠ styles.css not found in resources");
+            System.err.println(" styles.css not found in resources");
         }
 
         primaryStage.setTitle("Smart Energy Manager");

@@ -18,13 +18,7 @@ public class MainView extends BorderPane {
             "Dashboard", "Bâtiments", "Consommations", "Graphiques", "Analyse"
     };
 
-    private static final String[] NAV_ICONS = {
-            "\uD83D\uDCCA",  // 📊
-            "\uD83C\uDFE2",  // 🏢
-            "\u26A1",        // ⚡
-            "\uD83D\uDCC8",  // 📈
-            "\uD83D\uDD0D"   // 🔍
-    };
+    private static final String[] NAV_ICONS = {"", "", "", "", ""};
 
     private final Map<String, Node> viewCache = new HashMap<>();
     private final VBox sidebar;
@@ -67,7 +61,7 @@ public class MainView extends BorderPane {
         );
 
         // Brand
-        Label brand = new Label("⚡ Smart Energy");
+        Label brand = new Label("Smart Energy");
         brand.getStyleClass().add("title");
         brand.setFont(Font.font("System", FontWeight.BOLD, 18));
         brand.setTextFill(javafx.scene.paint.Color.web("#e94560"));

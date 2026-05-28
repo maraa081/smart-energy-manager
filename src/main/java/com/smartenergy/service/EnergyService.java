@@ -37,11 +37,11 @@ public class EnergyService {
                 int fixes = migrerUnites();
                 if (fixes > 0) {
                     persist();
-                    System.out.println("✔ " + fixes + " relevés migrés (unités corrigées)");
+                    System.out.println("[OK]  " + fixes + " relevés migrés (unités corrigées)");
                 }
-                System.out.println("✔ " + buildings.size() + " bâtiments chargés depuis : " + repository.getDataFilePath());
+                System.out.println("[OK]  " + buildings.size() + " bâtiments chargés depuis : " + repository.getDataFilePath());
             } catch (Exception e) {
-                System.err.println("⚠ Erreur chargement données : " + e.getMessage());
+                System.err.println(" Erreur chargement données : " + e.getMessage());
                 System.err.println("→ Réinitialisation avec données d'exemple...");
                 try {
                     java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(repository.getDataFilePath()));
@@ -49,9 +49,9 @@ public class EnergyService {
                 this.repository = JsonRepository.configure(repository.getDataFilePath());
                 try {
                     buildings = repository.loadAll();
-                    System.out.println("✔ " + buildings.size() + " bâtiments regénérés");
+                    System.out.println("[OK]  " + buildings.size() + " bâtiments regénérés");
                 } catch (IOException e2) {
-                    System.err.println("⚠ Échec reseed : " + e2.getMessage());
+                    System.err.println(" Échec reseed : " + e2.getMessage());
                     buildings = new HashMap<>();
                 }
                 loaded = true;

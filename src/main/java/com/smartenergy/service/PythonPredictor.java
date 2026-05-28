@@ -58,7 +58,7 @@ public class PythonPredictor {
             }
             return Optional.empty();
         } catch (Exception e) {
-            System.err.println("⚠ [PythonPredictor] Erreur predict: " + e.getMessage());
+            System.err.println(" [PythonPredictor] Erreur predict: " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -97,7 +97,7 @@ public class PythonPredictor {
             }
             return r2 > 0 ? Optional.of(new TrainResult(r2, mae, rmse, nTrain, nTest)) : Optional.empty();
         } catch (Exception e) {
-            System.err.println("⚠ [PythonPredictor] Erreur train: " + e.getMessage());
+            System.err.println(" [PythonPredictor] Erreur train: " + e.getMessage());
             return Optional.empty();
         }
     }
@@ -113,7 +113,7 @@ public class PythonPredictor {
             pb.environment().put("PYTHONIOENCODING", "utf-8");
             return runProcess(pb) != null;
         } catch (Exception e) {
-            System.err.println("⚠ [PythonPredictor] Erreur visualize: " + e.getMessage());
+            System.err.println(" [PythonPredictor] Erreur visualize: " + e.getMessage());
             return false;
         }
     }
@@ -126,7 +126,7 @@ public class PythonPredictor {
         while ((line = reader.readLine()) != null) output.append(line).append("\n");
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            System.err.println("⚠ [PythonPredictor] Exit code " + exitCode);
+            System.err.println(" [PythonPredictor] Exit code " + exitCode);
             return null;
         }
         return output.toString();
@@ -176,7 +176,7 @@ public class PythonPredictor {
             userDir + "/" + ML_DIR + "/" + SCRIPT, userDir + "\\" + ML_DIR + "\\" + SCRIPT,
         };
         for (String path : candidates) { File f = new File(path); if (f.exists() && f.isFile()) return f; }
-        System.err.println("⚠ [PythonPredictor] predict.py introuvable (user.dir=" + userDir + ")");
+        System.err.println(" [PythonPredictor] predict.py introuvable (user.dir=" + userDir + ")");
         return null;
     }
 }
