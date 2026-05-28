@@ -52,6 +52,8 @@ public class PythonPredictor {
 
             pb.directory(script.getParentFile());
             pb.redirectErrorStream(true);
+            // Forcer l'UTF-8 pour la sortie (évite les erreurs cp1252 sous Windows)
+            pb.environment().put("PYTHONIOENCODING", "utf-8");
 
             Process process = pb.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
