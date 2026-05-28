@@ -21,6 +21,7 @@ com/smartenergy/ui/BuildingView$5.class
 com/smartenergy/ui/ConsumptionView$3.class
 com/smartenergy/App.class
 com/smartenergy/model/ConsumptionRecord.class
+com/smartenergy/service/PythonPredictor$TrainResult.class
 com/smartenergy/service/EnergyService$TypeSummary.class
 com/smartenergy/service/WeatherService.class
 com/smartenergy/data/JsonRepository.class

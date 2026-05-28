@@ -28,6 +28,10 @@ public class AnalysisView extends ScrollPane {
 
     private final EnergyService service = EnergyService.getInstance();
 
+    // Labels for forest predictions (instance vars for refresh)
+    private Label forestValue;
+    private Label forestInterval;
+
     public AnalysisView() {
         setFitToWidth(true);
         setFitToHeight(true);
@@ -235,62 +239,192 @@ public class AnalysisView extends ScrollPane {
         }
         root.getChildren().add(anomaliesSection);
 
-        // ── Comparaison des prédictions ──
-        VBox comparisonSection = createSection("Comparaison des modèles de prédiction");
+        // ── Modèle RandomForest : paramètres + entraînement ──
+        VBox mlSection = createSection("🌲 RandomForest — Paramètres & Entraînement");
 
+        // Paramètres éditables
+        HBox paramsRow = new HBox(10);
+        paramsRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label lblEstimators = new Label("Arbres :");
+        lblEstimators.setTextFill(Color.web("#a0a0b0"));
+        Spinner<Integer> spEstimators = new Spinner<>(10, 500, PythonPredictor.getNEstimators(), 10);
+        spEstimators.setPrefWidth(90);
+        spEstimators.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white;");
+
+        Label lblDepth = new Label("Profondeur :");
+        lblDepth.setTextFill(Color.web("#a0a0b0"));
+        Spinner<Integer> spDepth = new Spinner<>(1, 50, PythonPredictor.getMaxDepth(), 1);
+        spDepth.setPrefWidth(80);
+        spDepth.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white;");
+
+        Label lblSplit = new Label("Split min :");
+        lblSplit.setTextFill(Color.web("#a0a0b0"));
+        Spinner<Integer> spSplit = new Spinner<>(2, 100, PythonPredictor.getMinSamplesSplit(), 1);
+        spSplit.setPrefWidth(80);
+        spSplit.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white;");
+
+        Label lblLeaf = new Label("Leaf min :");
+        lblLeaf.setTextFill(Color.web("#a0a0b0"));
+        Spinner<Integer> spLeaf = new Spinner<>(1, 50, PythonPredictor.getMinSamplesLeaf(), 1);
+        spLeaf.setPrefWidth(80);
+        spLeaf.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white;");
+
+        paramsRow.getChildren().addAll(
+                lblEstimators, spEstimators,
+                lblDepth, spDepth,
+                lblSplit, spSplit,
+                lblLeaf, spLeaf
+        );
+        mlSection.getChildren().add(paramsRow);
+
+        // Buttons row
+        HBox buttonsRow = new HBox(10);
+        buttonsRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label statusLabel = new Label("");
+        statusLabel.setFont(Font.font("System", 12));
+        statusLabel.setTextFill(Color.web("#a0a0b0"));
+
+        Button btnTrain = new Button("🎯 Ré-entraîner");
+        btnTrain.setStyle("-fx-background-color: #00e676; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 8 16;");
+
+        Button btnVisualize = new Button("📊 Générer graphiques");
+        btnVisualize.setStyle("-fx-background-color: #ffd700; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 8 16;");
+
+        Label metricsLabel = new Label("");
+        metricsLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        metricsLabel.setTextFill(Color.web("#00d2ff"));
+
+        buttonsRow.getChildren().addAll(btnTrain, btnVisualize, statusLabel);
+        mlSection.getChildren().addAll(buttonsRow, metricsLabel);
+
+        // --- Bouton Ré-entraîner ---
+        btnTrain.setOnAction(e -> {
+            btnTrain.setDisable(true);
+            statusLabel.setText("Entraînement en cours...");
+            metricsLabel.setText("");
+
+            new Thread(() -> {
+                try {
+                    PythonPredictor.setParams(
+                            spEstimators.getValue(), spDepth.getValue(),
+                            spSplit.getValue(), spLeaf.getValue());
+
+                    Optional<PythonPredictor.TrainResult> result = PythonPredictor.train();
+
+                    Platform.runLater(() -> {
+                        btnTrain.setDisable(false);
+                        if (result.isPresent()) {
+                            PythonPredictor.TrainResult r = result.get();
+                            statusLabel.setText("✅ Entraînement terminé");
+                            metricsLabel.setText(
+                                String.format("R² = %.4f  |  MAE = %.2f kWh  |  RMSE = %.2f kWh  |  Train: %d  Test: %d",
+                                    r.r2(), r.mae(), r.rmse(), r.nTrain(), r.nTest()));
+                            // Rafraîchir les prédictions
+                            rafraichirPredictions();
+                        } else {
+                            statusLabel.setText("❌ Échec (voir console)");
+                        }
+                    });
+                } catch (Exception ex) {
+                    Platform.runLater(() -> {
+                        btnTrain.setDisable(false);
+                        statusLabel.setText("❌ Erreur : " + ex.getMessage());
+                    });
+                }
+            }).start();
+        });
+
+        // --- Bouton Générer graphiques ---
+        btnVisualize.setOnAction(e -> {
+            btnVisualize.setDisable(true);
+            statusLabel.setText("Génération des graphiques...");
+            new Thread(() -> {
+                boolean ok = PythonPredictor.visualize();
+                Platform.runLater(() -> {
+                    btnVisualize.setDisable(false);
+                    statusLabel.setText(ok ? "✅ Graphiques dans ml-prediction/figures/" : "❌ Échec");
+                });
+            }).start();
+        });
+
+        root.getChildren().add(mlSection);
+
+        // ── Comparaison des prédictions ──
+        VBox comparisonSection = createSection("Comparaison des prédictions");
         HBox modelsRow = new HBox(16);
 
-        // --- Modèle 1 : Régression linéaire Java ---
+        // Modèle 1 : Java
         VBox javaModel = new VBox(10);
         javaModel.setPadding(new Insets(16));
         javaModel.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 8;");
         javaModel.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(javaModel, Priority.ALWAYS);
-
         Label javaTitle = new Label("☕ Régression linéaire (Java)");
         javaTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
         javaTitle.setTextFill(Color.web("#00d2ff"));
-
         double javaPred = service.getNextMonthPrediction();
         Label javaValue = new Label(formatConso(javaPred) + " kWh");
         javaValue.setFont(Font.font("System", FontWeight.BOLD, 28));
         javaValue.setTextFill(Color.web("#ffd700"));
-
         Label javaMeth = new Label("Moyenne 6 mois + régression linéaire");
         javaMeth.setFont(Font.font("System", 11));
         javaMeth.setTextFill(Color.web("#666"));
-
         javaModel.getChildren().addAll(javaTitle, javaValue, javaMeth);
 
-        // --- Modèle 2 : RandomForest Python ---
+        // Modèle 2 : Forest
         VBox forestModel = new VBox(10);
         forestModel.setPadding(new Insets(16));
         forestModel.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 8;");
         forestModel.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(forestModel, Priority.ALWAYS);
-
-        Label forestTitle = new Label("🌲 RandomForest (Python / scikit-learn)");
+        Label forestTitle = new Label("🌲 RandomForest (Python)");
         forestTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
         forestTitle.setTextFill(Color.web("#00e676"));
-
-        Label forestValue = new Label("Chargement...");
+        forestValue = new Label("Chargement...");
         forestValue.setFont(Font.font("System", FontWeight.BOLD, 28));
         forestValue.setTextFill(Color.web("#a0a0b0"));
-
-        Label forestInterval = new Label("");
+        forestInterval = new Label("");
         forestInterval.setFont(Font.font("System", 12));
         forestInterval.setTextFill(Color.web("#8f8f9f"));
-
-        Label forestMeth = new Label("200 arbres, 7 features, R² ≈ 0.87");
+        Label forestMeth = new Label("Paramètres modifiables ci-dessus");
         forestMeth.setFont(Font.font("System", 11));
         forestMeth.setTextFill(Color.web("#555"));
-
         forestModel.getChildren().addAll(forestTitle, forestValue, forestInterval, forestMeth);
 
         modelsRow.getChildren().addAll(javaModel, forestModel);
         comparisonSection.getChildren().add(modelsRow);
+        root.getChildren().add(comparisonSection);
 
-        // Appel asynchrone au modèle Python
+        // Charger la prédiction au démarrage
+        rafraichirPredictions();
+
+        setContent(root);
+    }
+
+    // ── Helpers ──
+
+    private VBox createSection(String title) {
+        VBox section = new VBox(10);
+        section.setPadding(new Insets(16));
+        section.setStyle(
+                "-fx-background-color: #0f3460;" +
+                "-fx-background-radius: 10;" +
+                "-fx-border-radius: 10;"
+        );
+        section.setMaxWidth(Double.MAX_VALUE);
+
+        Label lbl = new Label(title);
+        lbl.setFont(Font.font("System", FontWeight.SEMI_BOLD, 15));
+        lbl.setTextFill(Color.web("#a0a0b0"));
+
+        section.getChildren().add(lbl);
+        return section;
+    }
+
+    /** Rafraîchit la prédiction RandomForest dans l'UI */
+    private void rafraichirPredictions() {
         new Thread(() -> {
             try {
                 int mois = java.time.LocalDate.now().getMonthValue();
@@ -298,7 +432,6 @@ public class AnalysisView extends ScrollPane {
                 EnergyType dominantType = service.getDominantEnergy().type();
                 double temperature = 20.0;
 
-                // Essayer de récupérer une température via la météo
                 var buildings = service.getAllBuildings();
                 if (!buildings.isEmpty()) {
                     var b = buildings.get(0);
@@ -324,9 +457,7 @@ public class AnalysisView extends ScrollPane {
                     } else {
                         forestValue.setText("❌ Non disponible");
                         forestValue.setTextFill(Color.web("#e94560"));
-                        forestInterval.setText("Installez Python + scikit-learn \n(" +
-                                "cd ml-prediction && pip install -r requirements.txt && " +
-                                "python predict.py --train)");
+                        forestInterval.setText("Vérifiez que Python est installé");
                     }
                 });
             } catch (Exception e) {
@@ -337,30 +468,6 @@ public class AnalysisView extends ScrollPane {
                 });
             }
         }).start();
-
-        root.getChildren().add(comparisonSection);
-
-        setContent(root);
-    }
-
-    // ── Helpers ──
-
-    private VBox createSection(String title) {
-        VBox section = new VBox(10);
-        section.setPadding(new Insets(16));
-        section.setStyle(
-                "-fx-background-color: #0f3460;" +
-                "-fx-background-radius: 10;" +
-                "-fx-border-radius: 10;"
-        );
-        section.setMaxWidth(Double.MAX_VALUE);
-
-        Label lbl = new Label(title);
-        lbl.setFont(Font.font("System", FontWeight.SEMI_BOLD, 15));
-        lbl.setTextFill(Color.web("#a0a0b0"));
-
-        section.getChildren().add(lbl);
-        return section;
     }
 
     private String formatConso(double val) {

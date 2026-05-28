@@ -94,9 +94,9 @@ def create_sample_data(filepath: str):
         os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
         with open(filepath, "w") as f:
             f.write(SAMPLE_DATA)
-        print(f"✔ Fichier d'exemple créé : {filepath}")
+        print(f"[OK] Fichier d'exemple cree : {filepath}")
     else:
-        print(f"ℹ Fichier existant : {filepath}")
+        print(f"[INFO] Fichier existant : {filepath}")
 
 
 # ── Chargement et préparation des données ──
@@ -145,7 +145,11 @@ def prepare_features(df: pd.DataFrame, training: bool = True) -> tuple:
 
 # ── Entraînement du modèle RandomForest ──
 
-def train_model(X: pd.DataFrame, y: pd.Series) -> tuple:
+def train_model(X: pd.DataFrame, y: pd.Series,
+                n_estimators: int = 200,
+                max_depth: int = 12,
+                min_samples_split: int = 5,
+                min_samples_leaf: int = 2) -> tuple:
     """Entraîne un RandomForest et retourne le modèle + métriques."""
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -155,11 +159,14 @@ def train_model(X: pd.DataFrame, y: pd.Series) -> tuple:
         X, y, test_size=TEST_SIZE, random_state=SEED
     )
 
+    print(f"[PARAMS] n_estimators={n_estimators}, max_depth={max_depth},"
+          f" min_samples_split={min_samples_split}, min_samples_leaf={min_samples_leaf}")
+
     model = RandomForestRegressor(
-        n_estimators=200,
-        max_depth=12,
-        min_samples_split=5,
-        min_samples_leaf=2,
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
         random_state=SEED,
         n_jobs=-1,
     )
@@ -352,12 +359,16 @@ def main():
     )
     parser.add_argument("--train", action="store_true", help="Entraîner le modèle")
     parser.add_argument("--eval", action="store_true", help="Évaluer le modèle existant")
-    parser.add_argument("--visualize", action="store_true", help="Générer les graphiques")
+    parser.add_argument("--visualize", action="store_true", help="Générer les graphiques (après --train)")
     parser.add_argument("--predict", action="store_true", help="Faire une prédiction")
     parser.add_argument("--mois", type=int, default=6, help="Mois (1-12)")
     parser.add_argument("--heure", type=int, default=14, help="Heure (0-23)")
     parser.add_argument("--type", type=str, default="ELECTRICITE", help="Type d'énergie")
     parser.add_argument("--temperature", type=float, default=25.0, help="Température extérieure (°C)")
+    parser.add_argument("--n-estimators", type=int, default=200, help="Nombre d'arbres (défaut: 200)")
+    parser.add_argument("--max-depth", type=int, default=12, help="Profondeur max des arbres (défaut: 12)")
+    parser.add_argument("--min-samples-split", type=int, default=5, help="Échantillons min pour diviser (défaut: 5)")
+    parser.add_argument("--min-samples-leaf", type=int, default=2, help="Échantillons min par feuille (défaut: 2)")
     parser.add_argument("--export", type=str, help="Exporter les données d'entraînement au format CSV")
     parser.add_argument("--data", type=str, default=DATA_FILE, help="Fichier de données CSV")
 
@@ -368,14 +379,23 @@ def main():
 
     if args.train:
         df = load_data(args.data)
-        print(f"📊 Données chargées : {len(df)} lignes")
-        print(f"   Colonnes : {list(df.columns)}")
+        print(f"[DATA] {len(df)} lignes chargees")
         X, y = prepare_features(df)
-        model, metrics = train_model(X, y)
+        model, metrics = train_model(
+            X, y,
+            n_estimators=args.n_estimators,
+            max_depth=args.max_depth,
+            min_samples_split=args.min_samples_split,
+            min_samples_leaf=args.min_samples_leaf,
+        )
         save_model(model, metrics)
 
+        # Métriques pour le parsing Java
+        print(f"[METRICS] R2={metrics['r2']:.4f} MAE={metrics['mae']:.2f} RMSE={metrics['rmse']:.2f}")
+        print(f"[METRICS] Train={metrics['n_train']} Test={metrics['n_test']}")
+
         # Afficher les features les plus importantes
-        print("\n📌 Top 3 features les plus importantes :")
+        print("[FEATURES] Top 3:")
         feat_imp = sorted(zip(metrics["features"], metrics["feature_importances"]),
                          key=lambda x: x[1], reverse=True)
         for feat, imp in feat_imp[:3]:
@@ -386,16 +406,8 @@ def main():
         X, y = prepare_features(df)
         model, metrics = load_trained_model()
 
-        print(f"\n📊 Évaluation du modèle :")
-        print(f"   R²  = {metrics['r2']:.4f}")
-        print(f"   MAE = {metrics['mae']:.2f} kWh")
-        print(f"   RMSE= {metrics['rmse']:.2f} kWh")
-        print(f"   Échantillons: {metrics['n_train']} train + {metrics['n_test']} test")
-
-        print("\n📌 Importance des features :")
-        for feat, imp in sorted(zip(metrics["features"], metrics["feature_importances"]),
-                               key=lambda x: x[1], reverse=True):
-            print(f"   {feat}: {imp:.3f}")
+        print(f"[METRICS] R2={metrics['r2']:.4f} MAE={metrics['mae']:.2f} RMSE={metrics['rmse']:.2f}")
+        print(f"[METRICS] Train={metrics['n_train']} Test={metrics['n_test']}")
 
     if args.visualize:
         df = load_data(args.data)
@@ -408,14 +420,8 @@ def main():
         prediction, interval = predict(
             model, args.mois, args.heure, args.type, args.temperature
         )
-        print(f"\n🔮 Prédiction de consommation :")
-        print(f"   Mois : {args.mois}")
-        print(f"   Heure : {args.heure:02d}h")
-        print(f"   Type : {args.type}")
-        print(f"   Température : {args.temperature}°C")
-        print(f"   ─────────────────────────────")
-        print(f"   ⚡ {prediction:.2f} kWh estimés")
-        print(f"   📊 Intervalle de confiance (95%) : [{interval[0]:.2f}, {interval[1]:.2f}] kWh")
+        print(f"[PREDICT] {prediction:.2f} kWh estimes")
+        print(f"[INTERVAL] [{interval[0]:.2f}, {interval[1]:.2f}] kWh")
 
     if args.export:
         df = load_data(args.data)
