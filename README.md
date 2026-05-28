@@ -1,60 +1,48 @@
-# ⚡ Smart Energy Manager
+# Smart Energy Manager
 
-Application JavaFX de gestion et suivi de consommations énergétiques pour bâtiments.
+Appli JavaFX pour suivre les consommations d'energie de batiments.
 
-## Fonctionnalités
+## Fonctionnalites
 
-- 📊 **Tableau de bord** — Vue d'ensemble des consommations, tendances et alertes météo
-- 🏢 **Gestion des bâtiments** — Ajout, modification, clonage et suppression
-- ⚡ **Consommations** — Saisie manuelle, import CSV, génération de données test
-- 📈 **Graphiques** — Courbes temporelles, histogrammes, répartition, comparaison
-- 🔍 **Analyses** — Bâtiments les plus consommateurs, tendances, prédictions, anomalies
-- ☀️ **Météo intégrée** — Température du jour et alertes via Open-Meteo (gratuit)
-- 🤖 **Détection d'anomalies** — Z-score, données manquantes, valeurs aberrantes
-- 📉 **Prédiction** — Régression linéaire sur 6 mois glissants
+- Tableau de bord : conso du jour, du mois, de l'annee, cout total
+- Gestion des batiments : ajout, modification, suppression
+- Consommations : saisie manuelle, import CSV, generation de donnees test
+- Graphiques : courbes, histogrammes, repartition, comparaison
+- Analyses : tendances, predictions, detection d'anomalies
+- Meteo integree via Open-Meteo (API gratuite)
+- Detection d'anomalies : z-score, donnees manquantes, valeurs aberrantes
+- Prediction : regression lineaire + RandomForest (Python)
 
 ## Prérequis
 
-- **Java 21+** (OpenJDK 21 recommandé)
-- **Maven 3.8+**
-- **JavaFX 23** (géré automatiquement par Maven)
+- Java 21+
+- Maven 3.8+
 
-## Installation & Lancement
+## Lancer l'app
 
 ```bash
-# Cloner le dépôt
-git clone https://github.com/maraa081/smart-energy-manager.git
-cd smart-energy-manager
-
-# Compiler et lancer
 mvn clean javafx:run
 ```
 
-**Premier lancement :** 4 bâtiments d'exemple sont automatiquement créés (appartement, maison, bureau, commerce) avec des données de consommation simulées. Pas besoin de tout ressaisir.
+Au premier lancement, 4 batiments d'exemple sont generes automatiquement.
 
-## Persistance des données
+## Persistance
 
-Les données sont sauvegardées automatiquement dans :
+Les donnees sont sauvegardees dans :
 ```
 ~/.smart-energy-manager/data/buildings.json
 ```
 
-Les modifications (ajout de bâtiments, relevés, imports CSV) sont persistées entre les sessions.
-
 ## Import CSV
 
-Format attendu (avec en-tête) :
-
-```csv
+```
 date,heure,type_energie,quantite,cout
 2025-01-15,08:00,ELECTRICITE,12.5,2.35
 ```
 
-Types d'énergie supportés : `ELECTRICITE`, `GAZ`, `SOLAIRE`, `CHAUFFAGE`, `CLIMATISATION`, `EAU`
+Types supportes : ELECTRICITE, GAZ, SOLAIRE, CHAUFFAGE, CLIMATISATION, EAU
 
-## Modèle de prédiction ML
-
-Un modèle **RandomForest** se trouve dans le dossier `ml-prediction/` :
+## Modele de prediction ML (RandomForest)
 
 ```bash
 cd ml-prediction
@@ -63,19 +51,10 @@ python predict.py --train
 python predict.py --predict --mois 6 --heure 14 --type ELECTRICITE --temperature 25
 ```
 
-Voir [ml-prediction/README.md](ml-prediction/README.md) pour plus de détails.
+## Stack
 
-## Stack technique
-
-| Composant | Technologie |
-|-----------|-------------|
-| UI | JavaFX 23 |
-| Build | Maven |
-| Persistance | JSON (Jackson) |
-| CSV | Apache Commons CSV |
-| Météo | Open-Meteo API (gratuite) |
-| ML | scikit-learn (Python) |
+Java 21 + JavaFX 23 + Maven + Jackson + Apache Commons CSV + Open-Meteo + scikit-learn
 
 ## Auteur
 
-Projet étudiant — [@maraa081](https://github.com/maraa081)
+Projet etudiant — @maraa081
