@@ -25,7 +25,6 @@ public class JsonRepository {
     private static final String DATA_FILE = "buildings.json";
 
     private static JsonRepository instance;
-
     private final ObjectMapper objectMapper;
     private final File dataFile;
 
@@ -41,37 +40,26 @@ public class JsonRepository {
         this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         this.dataFile = new File(filePath);
 
-        // Ensure parent directory exists
         File parentDir = dataFile.getParentFile();
         if (parentDir != null && !parentDir.exists()) {
             parentDir.mkdirs();
         }
 
-        // Seed sample data on first run
         if (!dataFile.exists()) {
             seedSampleData();
         }
     }
 
-    /**
-     * Retourne le chemin absolu vers le fichier de données utilisateur.
-     * Exemple : /home/maraa/.smart-energy-manager/data/buildings.json
-     */
     private static String getDefaultDataPath() {
-        String home = System.getProperty("user.home", ".");
-        return Paths.get(home, DATA_DIR, DATA_FILE).toString();
+        return Paths.get(System.getProperty("user.home", "."), DATA_DIR, DATA_FILE).toString();
     }
 
-    /**
-     * Crée des données d'exemple au premier lancement.
-     */
     private void seedSampleData() {
         try {
             Map<String, Building> samples = new HashMap<>();
-            Random rand = new Random(42); // seed fixe = reproductible
+            Random rand = new Random(42);
             LocalDate now = LocalDate.now();
 
-            // ── Bâtiment 1 : Appartement ──
             Building apt = new Building();
             apt.setNom("Appartement Paris 11e");
             apt.setAdresse("15 Rue de la Roquette, 75011 Paris");
@@ -84,7 +72,6 @@ public class JsonRepository {
             generateRecords(apt, now, rand, 30, 0.1, 5.0, EnergyType.EAU, 30);
             samples.put(apt.getId(), apt);
 
-            // ── Bâtiment 2 : Maison ──
             Building maison = new Building();
             maison.setNom("Maison Lyon 3e");
             maison.setAdresse("8 Rue de la Bourse, 69003 Lyon");
@@ -97,7 +84,6 @@ public class JsonRepository {
             generateRecords(maison, now, rand, 40, 0.5, 8.0, EnergyType.EAU, 30);
             samples.put(maison.getId(), maison);
 
-            // ── Bâtiment 3 : Bureau ──
             Building bureau = new Building();
             bureau.setNom("Bureau Tech Center");
             bureau.setAdresse("45 Cours du Médoc, 33000 Bordeaux");
@@ -110,7 +96,6 @@ public class JsonRepository {
             generateRecords(bureau, now, rand, 50, 1.0, 10.0, EnergyType.EAU, 30);
             samples.put(bureau.getId(), bureau);
 
-            // ── Bâtiment 4 : Commerce ──
             Building commerce = new Building();
             commerce.setNom("Boulangerie St-Michel");
             commerce.setAdresse("12 Place St-Michel, 31000 Toulouse");
@@ -139,7 +124,6 @@ public class JsonRepository {
             LocalDateTime dt = now.minusDays(rand.nextInt(365))
                     .atTime(LocalTime.of(rand.nextInt(8, 20), rand.nextInt(0, 60)));
             double qte = minQte + rand.nextDouble() * (maxQte - minQte);
-            // Arrondi à 1 décimale
             qte = Math.round(qte * 10.0) / 10.0;
             double cout = Math.round(qte * (0.12 + rand.nextDouble() * 0.18) * 100.0) / 100.0;
             building.addConsumptionRecord(
@@ -147,9 +131,6 @@ public class JsonRepository {
         }
     }
 
-    /**
-     * Retourne l'instance unique du singleton.
-     */
     public static synchronized JsonRepository getInstance() {
         if (instance == null) {
             instance = new JsonRepository();
@@ -157,35 +138,19 @@ public class JsonRepository {
         return instance;
     }
 
-    /**
-     * Reconfigure le chemin du fichier de données (utile pour les tests).
-     * Retourne la nouvelle instance.
-     */
     public static synchronized JsonRepository configure(String filePath) {
         instance = new JsonRepository(filePath);
         return instance;
     }
 
-    /**
-     * Réinitialise le singleton (utile pour les tests).
-     */
     public static synchronized void reset() {
         instance = null;
     }
 
-    // ---- Sauvegarde globale ----
-
-    /**
-     * Sauvegarde toute la map de bâtiments dans le fichier JSON.
-     */
     public void saveAll(Map<String, Building> buildings) throws IOException {
         objectMapper.writeValue(dataFile, buildings);
     }
 
-    /**
-     * Charge tous les bâtiments depuis le fichier JSON.
-     * Retourne une map vide si le fichier n'existe pas.
-     */
     public Map<String, Building> loadAll() throws IOException {
         if (!dataFile.exists()) {
             return new HashMap<>();
@@ -194,45 +159,27 @@ public class JsonRepository {
                 objectMapper.getTypeFactory().constructMapType(HashMap.class, String.class, Building.class));
     }
 
-    // ---- Opérations individuelles ----
-
-    /**
-     * Sauvegarde (ajoute ou remplace) un bâtiment dans le fichier.
-     */
     public void saveBuilding(Building building) throws IOException {
         Map<String, Building> buildings = loadAll();
         buildings.put(building.getId(), building);
         saveAll(buildings);
     }
 
-    /**
-     * Charge un bâtiment par son identifiant.
-     * Retourne null s'il n'existe pas.
-     */
     public Building loadBuilding(String id) throws IOException {
         Map<String, Building> buildings = loadAll();
         return buildings.get(id);
     }
 
-    /**
-     * Supprime un bâtiment du fichier par son identifiant.
-     */
     public void deleteBuilding(String id) throws IOException {
         Map<String, Building> buildings = loadAll();
         buildings.remove(id);
         saveAll(buildings);
     }
 
-    /**
-     * Retourne tous les bâtiments sous forme de map.
-     */
     public Map<String, Building> getAllBuildings() throws IOException {
         return loadAll();
     }
 
-    /**
-     * Retourne le chemin du fichier de données (utile pour l'affichage).
-     */
     public String getDataFilePath() {
         return dataFile.getAbsolutePath();
     }

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class Building {
@@ -27,60 +26,41 @@ public class Building {
 
     @JsonCreator
     public Building(
-            @JsonProperty("id") String id,
-            @JsonProperty("nom") String nom,
-            @JsonProperty("adresse") String adresse,
-            @JsonProperty("surface") double surface,
+            @JsonProperty("id") String id, @JsonProperty("nom") String nom,
+            @JsonProperty("adresse") String adresse, @JsonProperty("surface") double surface,
             @JsonProperty("type") BuildingType type,
-            @JsonProperty("latitude") double latitude,
-            @JsonProperty("longitude") double longitude,
+            @JsonProperty("latitude") double latitude, @JsonProperty("longitude") double longitude,
             @JsonProperty("consommationRecords") List<ConsumptionRecord> consommationRecords) {
-        this.id = id;
-        this.nom = nom;
-        this.adresse = adresse;
-        this.surface = surface;
-        this.type = type;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.consommationRecords = consommationRecords != null
-                ? new ArrayList<>(consommationRecords) : new ArrayList<>();
+        this.id = id; this.nom = nom; this.adresse = adresse; this.surface = surface; this.type = type;
+        this.latitude = latitude; this.longitude = longitude;
+        this.consommationRecords = consommationRecords != null ? new ArrayList<>(consommationRecords) : new ArrayList<>();
     }
 
-    // --- Getters ---
-
-    public String getId()                           { return id; }
-    public String getNom()                          { return nom; }
-    public String getAdresse()                      { return adresse; }
-    public double getSurface()                      { return surface; }
-    public BuildingType getType()                   { return type; }
-    public double getLatitude()                     { return latitude; }
-    public double getLongitude()                    { return longitude; }
+    public String getId() { return id; }
+    public String getNom() { return nom; }
+    public String getAdresse() { return adresse; }
+    public double getSurface() { return surface; }
+    public BuildingType getType() { return type; }
+    public double getLatitude() { return latitude; }
+    public double getLongitude() { return longitude; }
     public List<ConsumptionRecord> getConsommationRecords() { return consommationRecords; }
 
-    // --- Setters ---
-
-    public void setId(String id)                    { this.id = id; }
-    public void setNom(String nom)                  { this.nom = nom; }
-    public void setAdresse(String adresse)          { this.adresse = adresse; }
-    public void setSurface(double surface)          { this.surface = surface; }
-    public void setType(BuildingType type)          { this.type = type; }
-    public void setLatitude(double latitude)        { this.latitude = latitude; }
-    public void setLongitude(double longitude)      { this.longitude = longitude; }
-
-    // --- Helpers ---
+    public void setId(String id) { this.id = id; }
+    public void setNom(String nom) { this.nom = nom; }
+    public void setAdresse(String adresse) { this.adresse = adresse; }
+    public void setSurface(double surface) { this.surface = surface; }
+    public void setType(BuildingType type) { this.type = type; }
+    public void setLatitude(double latitude) { this.latitude = latitude; }
+    public void setLongitude(double longitude) { this.longitude = longitude; }
 
     @JsonIgnore
     public double getTotalConsommation() {
-        return consommationRecords.stream()
-                .mapToDouble(ConsumptionRecord::getQuantite)
-                .sum();
+        return consommationRecords.stream().mapToDouble(ConsumptionRecord::getQuantite).sum();
     }
 
     @JsonIgnore
     public double getCoutTotal() {
-        return consommationRecords.stream()
-                .mapToDouble(ConsumptionRecord::getCoutEstime)
-                .sum();
+        return consommationRecords.stream().mapToDouble(ConsumptionRecord::getCoutEstime).sum();
     }
 
     @JsonIgnore
@@ -92,17 +72,13 @@ public class Building {
         this.consommationRecords.add(record);
     }
 
-    // --- Record-style accessors (for compat with other services) ---
-
     @JsonIgnore
-    public String id()  { return id; }
+    public String id() { return id; }
     @JsonIgnore
     public String nom() { return nom; }
     @JsonIgnore
     public List<ConsumptionRecord> consommations() { return consommationRecords; }
 
     @Override
-    public String toString() {
-        return nom != null ? nom : "(sans nom)";
-    }
+    public String toString() { return nom != null ? nom : "(sans nom)"; }
 }
