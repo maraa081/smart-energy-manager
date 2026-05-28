@@ -8,26 +8,14 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service d'analyse statique fournissant tendances, prévisions
- * et comparaisons sur les données de consommation.
- */
 public final class AnalysisService {
 
     private AnalysisService() {
         throw new UnsupportedOperationException("Classe utilitaire");
     }
 
-    /** Tendance sur les 3 derniers mois glissants. */
     public enum Trend { HAUSSE, BAISSE, STABLE }
 
-    // ---------------------------------------------------------------
-    // Type d'énergie dominant
-    // ---------------------------------------------------------------
-
-    /**
-     * Retourne le type d'énergie le plus consommé sur une période donnée.
-     */
     public static EnergyType getDominantEnergyType(String buildingId,
                                                    LocalDate start,
                                                    LocalDate end,
@@ -39,13 +27,6 @@ public final class AnalysisService {
                 .orElse(EnergyType.ELECTRICITE);
     }
 
-    // ---------------------------------------------------------------
-    // Tendance de consommation
-    // ---------------------------------------------------------------
-
-    /**
-     * Compare le mois en cours au mois précédent pour déterminer la tendance.
-     */
     public static Trend getConsumptionTrend(String buildingId, EnergyService service) {
         LocalDate now = LocalDate.now();
         LocalDate thisMonthStart = now.withDayOfMonth(1);
@@ -56,7 +37,6 @@ public final class AnalysisService {
         double lastMonth = sumConsumption(service.getConsumptionRecords(buildingId, lastMonthStart, lastMonthEnd));
 
         if (lastMonth == 0) return Trend.STABLE;
-
         double ratio = (thisMonth - lastMonth) / lastMonth;
         if (ratio > 0.05) return Trend.HAUSSE;
         if (ratio < -0.05) return Trend.BAISSE;
@@ -67,14 +47,6 @@ public final class AnalysisService {
         return records.stream().mapToDouble(ConsumptionRecord::getQuantite).sum();
     }
 
-    // ---------------------------------------------------------------
-    // Estimation mensuelle
-    // ---------------------------------------------------------------
-
-    /**
-     * Estimation de la consommation mensuelle basée sur la moyenne
-     * des 3 derniers mois.
-     */
     public static double getMonthlyEstimate(String buildingId, EnergyService service) {
         LocalDate now = LocalDate.now();
         double total = 0;
@@ -87,13 +59,6 @@ public final class AnalysisService {
         return total / months;
     }
 
-    // ---------------------------------------------------------------
-    // Pics de consommation
-    // ---------------------------------------------------------------
-
-    /**
-     * Retourne les {@code topN} jours avec la plus forte consommation.
-     */
     public static List<LocalDate> getPeakPeriods(String buildingId,
                                                   int topN,
                                                   EnergyService service) {
@@ -113,14 +78,6 @@ public final class AnalysisService {
                 .toList();
     }
 
-    // ---------------------------------------------------------------
-    // Comparaison entre bâtiments
-    // ---------------------------------------------------------------
-
-    /**
-     * Compare la consommation totale de plusieurs bâtiments sur l'année en cours.
-     * @return map nom du bâtiment → consommation totale
-     */
     public static Map<String, Double> compareBuildings(List<String> ids,
                                                         EnergyService service) {
         LocalDate now = LocalDate.now();
@@ -136,13 +93,6 @@ public final class AnalysisService {
         return result;
     }
 
-    // ---------------------------------------------------------------
-    // Consommation par type d'énergie
-    // ---------------------------------------------------------------
-
-    /**
-     * Répartition de la consommation par type d'énergie (toute la période disponible).
-     */
     public static Map<EnergyType, Double> getConsumptionByType(String buildingId,
                                                                 EnergyService service) {
         return getConsumptionByType(buildingId, null, null, service);
@@ -159,7 +109,6 @@ public final class AnalysisService {
             Building b = service.getBuilding(buildingId);
             records = b != null ? b.getConsommationRecords() : List.of();
         }
-
         return records.stream()
                 .collect(Collectors.groupingBy(
                         ConsumptionRecord::getType,
@@ -167,14 +116,6 @@ public final class AnalysisService {
                 ));
     }
 
-    // ---------------------------------------------------------------
-    // Prédiction mois suivant (moyenne mobile simple)
-    // ---------------------------------------------------------------
-
-    /**
-     * Prédiction pour le mois prochain basée sur une moyenne mobile
-     * simple des 3 derniers mois.
-     */
     public static double predictNextMonth(String buildingId, EnergyService service) {
         return getMonthlyEstimate(buildingId, service);
     }
