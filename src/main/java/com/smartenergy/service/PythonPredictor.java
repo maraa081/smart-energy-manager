@@ -43,9 +43,8 @@ public class PythonPredictor {
                 return Optional.empty();
             }
 
-            // Essayer d'utiliser le venv local s'il existe, sinon python3 système
-            File venvPython = new File(script.getParentFile(), "venv/bin/python3");
-            String pythonCmd = venvPython.exists() ? venvPython.getAbsolutePath() : "python3";
+            // Détection auto : venv, Windows, ou python3 système
+            String pythonCmd = detectPythonCommand(script.getParentFile());
 
             ProcessBuilder pb = new ProcessBuilder(
                     pythonCmd, script.getAbsolutePath(),
@@ -147,6 +146,24 @@ public class PythonPredictor {
             System.err.println("⚠ Erreur parsing sortie Python : " + e.getMessage());
             return Optional.empty();
         }
+    }
+
+    /**
+     * Détecte la commande Python à utiliser (venv, Windows, ou système).
+     */
+    private static String detectPythonCommand(File scriptDir) {
+        boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+
+        // 1. Venv (Linux / Mac)
+        File linuxVenv = new File(scriptDir, "venv/bin/python3");
+        if (linuxVenv.exists()) return linuxVenv.getAbsolutePath();
+
+        // 2. Venv (Windows)
+        File winVenv = new File(scriptDir, "venv/Scripts/python.exe");
+        if (winVenv.exists()) return winVenv.getAbsolutePath();
+
+        // 3. Commande système selon OS
+        return isWindows ? "python" : "python3";
     }
 
     /**
