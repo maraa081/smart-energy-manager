@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -46,7 +47,7 @@ public class PythonPredictor {
                     "--mois", String.valueOf(mois),
                     "--heure", String.valueOf(heure),
                     "--type", type.name(),
-                    "--temperature", String.format("%.1f", temperature)
+                    "--temperature", String.format(Locale.US, "%.1f", temperature)
             );
 
             pb.directory(script.getParentFile());
@@ -66,7 +67,10 @@ public class PythonPredictor {
 
             if (exitCode != 0) {
                 System.err.println("⚠ [PythonPredictor] Exit code " + exitCode);
-                System.err.println("   Output: " + (fullOutput.length() > 200 ? fullOutput.substring(0, 200) : fullOutput));
+                System.err.println("   Full output:");
+                for (String l : fullOutput.split("\n")) {
+                    System.err.println("   | " + l);
+                }
                 return Optional.empty();
             }
 
