@@ -193,51 +193,7 @@ public class AnalysisView extends ScrollPane {
         }
         root.getChildren().add(peaksSection);
 
-        // ── Anomalies ──
-        VBox anomaliesSection = createSection("Anomalies détectées");
-        List<Anomaly> anomalies = service.getAnomalies();
 
-        if (anomalies.isEmpty()) {
-            Label noAnomalies = new Label("[OK]  Aucune anomalie détectée");
-            noAnomalies.setFont(Font.font("System", 14));
-            noAnomalies.setTextFill(Color.web("#00e676"));
-            anomaliesSection.getChildren().add(noAnomalies);
-        } else {
-            TableView<Anomaly> anomaliesTable = new TableView<>();
-            anomaliesTable.setStyle(
-                    "-fx-background-color: #0f3460;" +
-                    "-fx-table-cell-border-color: #1a1a2e;"
-            );
-            anomaliesTable.setPrefHeight(200);
-            anomaliesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-
-            TableColumn<Anomaly, String> colDate = new TableColumn<>("Date");
-            colDate.setCellValueFactory(d ->
-                    new SimpleStringProperty(d.getValue().date()
-                            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
-            colDate.setStyle("-fx-text-fill: white;");
-
-            TableColumn<Anomaly, String> colType = new TableColumn<>("Type");
-            colType.setCellValueFactory(d ->
-                    new SimpleStringProperty(d.getValue().type().toString()));
-            colType.setStyle("-fx-text-fill: white;");
-
-            TableColumn<Anomaly, String> colDesc = new TableColumn<>("Description");
-            colDesc.setCellValueFactory(d ->
-                    new SimpleStringProperty(d.getValue().description()));
-            colDesc.setStyle("-fx-text-fill: white;");
-
-            TableColumn<Anomaly, String> colEcart = new TableColumn<>("Écart");
-            colEcart.setCellValueFactory(d ->
-                    new SimpleStringProperty(String.format("%.1f", d.getValue().ecart())));
-            colEcart.setStyle("-fx-text-fill: white;");
-
-            anomaliesTable.getColumns().addAll(colDate, colType, colDesc, colEcart);
-            anomaliesTable.setItems(FXCollections.observableArrayList(anomalies));
-
-            anomaliesSection.getChildren().add(anomaliesTable);
-        }
-        root.getChildren().add(anomaliesSection);
 
         // ── Comparaison des prédictions ──
         VBox comparisonSection = createSection("[Foret]  Comparaison : Régression linéaire vs RandomForest");
