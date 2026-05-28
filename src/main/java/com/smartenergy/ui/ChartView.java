@@ -139,11 +139,11 @@ public class ChartView extends VBox {
         xAxis.setStyle("-fx-tick-label-fill: #a0a0b0;");
 
         NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("kWh");
+        yAxis.setLabel("Consommation (kWh)");
         yAxis.setStyle("-fx-tick-label-fill: #a0a0b0;");
 
         LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
-        chart.setTitle("Consommation quotidienne");
+        chart.setTitle("Consommation quotidienne (kWh)");
         chart.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white;");
         chart.setAnimated(false);
         chart.setLegendVisible(true);
@@ -189,11 +189,11 @@ public class ChartView extends VBox {
         xAxis.setStyle("-fx-tick-label-fill: #a0a0b0;");
 
         NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("kWh");
+        yAxis.setLabel("Consommation (kWh)");
         yAxis.setStyle("-fx-tick-label-fill: #a0a0b0;");
 
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
-        chart.setTitle("Consommation mensuelle");
+        chart.setTitle("Consommation mensuelle (kWh)");
         chart.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white;");
         chart.setAnimated(false);
 
@@ -265,11 +265,11 @@ public class ChartView extends VBox {
         xAxis.setStyle("-fx-tick-label-fill: #a0a0b0;");
 
         NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("kWh");
+        yAxis.setLabel("Consommation (kWh)");
         yAxis.setStyle("-fx-tick-label-fill: #a0a0b0;");
 
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
-        chart.setTitle("Comparaison de consommation");
+        chart.setTitle("Comparaison entre bâtiments (kWh)");
         chart.setStyle("-fx-background-color: #0f3460; -fx-text-fill: white;");
         chart.setAnimated(false);
 

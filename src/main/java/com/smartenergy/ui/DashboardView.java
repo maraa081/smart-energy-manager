@@ -122,7 +122,7 @@ public class DashboardView extends ScrollPane {
             }
         }).start();
 
-        // ── Metric Cards ──
+        // ── Metric Cards (Énergie) ──
         HBox metricsRow = new HBox(16);
         metricsRow.setAlignment(Pos.CENTER);
 
@@ -133,14 +133,27 @@ public class DashboardView extends ScrollPane {
                 createMetricCard("Coût total", String.format("%.2f", lastSummary.coutTotal()), "€", "#0f3460", "#e94560")
         );
 
-        // Ensure cards take equal width
         for (javafx.scene.Node c : metricsRow.getChildren()) {
             HBox.setHgrow(c, Priority.ALWAYS);
         }
-
         root.getChildren().add(metricsRow);
 
-        // ── Top Building + Trend + Weather Correlation ──
+        // ── Metric Cards (Eau) ──
+        if (lastSummary.eauJour() > 0 || lastSummary.eauMois() > 0 || lastSummary.eauAnnee() > 0) {
+            HBox eauRow = new HBox(16);
+            eauRow.setAlignment(Pos.CENTER);
+            eauRow.getChildren().addAll(
+                    createMetricCard("Eau aujourd'hui", formatConso(lastSummary.eauJour()), "m³", "#0f3460", "#4fc3f7"),
+                    createMetricCard("Eau ce mois", formatConso(lastSummary.eauMois()), "m³", "#0f3460", "#4fc3f7"),
+                    createMetricCard("Eau cette année", formatConso(lastSummary.eauAnnee()), "m³", "#0f3460", "#4fc3f7")
+            );
+            for (javafx.scene.Node c : eauRow.getChildren()) {
+                HBox.setHgrow(c, Priority.ALWAYS);
+            }
+            root.getChildren().add(eauRow);
+        }
+
+        // ── Top Building + Trend ──
         HBox topBuildingRow = new HBox(16);
 
         VBox topBuildingCard = new VBox(8);

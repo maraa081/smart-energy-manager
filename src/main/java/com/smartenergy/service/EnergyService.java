@@ -86,6 +86,9 @@ public class EnergyService {
             double coutTotal,
             String topBuildingNom,
             double topBuildingConso,
+            double eauJour,
+            double eauMois,
+            double eauAnnee,
             List<Anomaly> recentAlerts
     ) {}
 
@@ -95,6 +98,9 @@ public class EnergyService {
         double consoJour = 0;
         double consoMois = 0;
         double consoAnnee = 0;
+        double eauJour = 0;
+        double eauMois = 0;
+        double eauAnnee = 0;
         double coutTotal = 0;
         String topBuildingNom = "—";
         double topBuildingConso = 0;
@@ -109,15 +115,24 @@ public class EnergyService {
             }
             for (ConsumptionRecord r : b.getConsommationRecords()) {
                 LocalDate d = r.getDateHeure().toLocalDate();
-                if (d.equals(now)) consoJour += r.getQuantite();
-                if (d.getMonth() == now.getMonth() && d.getYear() == now.getYear())
-                    consoMois += r.getQuantite();
-                if (d.getYear() == now.getYear()) consoAnnee += r.getQuantite();
+                boolean isEau = r.getType() == EnergyType.EAU;
+                if (d.equals(now)) {
+                    if (isEau) eauJour += r.getQuantite();
+                    else consoJour += r.getQuantite();
+                }
+                if (d.getMonth() == now.getMonth() && d.getYear() == now.getYear()) {
+                    if (isEau) eauMois += r.getQuantite();
+                    else consoMois += r.getQuantite();
+                }
+                if (d.getYear() == now.getYear()) {
+                    if (isEau) eauAnnee += r.getQuantite();
+                    else consoAnnee += r.getQuantite();
+                }
             }
         }
 
         return new DashboardSummary(consoJour, consoMois, consoAnnee, coutTotal,
-                topBuildingNom, topBuildingConso, alerts);
+                topBuildingNom, topBuildingConso, eauJour, eauMois, eauAnnee, alerts);
     }
 
     // ========================================================================
@@ -245,7 +260,7 @@ public class EnergyService {
             EnergyType type = types[rand.nextInt(types.length)];
             double qte = 1.0 + rand.nextDouble() * 50;
             double cout = qte * (0.10 + rand.nextDouble() * 0.30);
-            b.addConsumptionRecord(new ConsumptionRecord(dt, type, qte, cout, "kWh"));
+            b.addConsumptionRecord(new ConsumptionRecord(dt, type, qte, cout, type.getUnite()));
         }
         persist();
     }

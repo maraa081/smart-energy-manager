@@ -167,8 +167,8 @@ public class CsvImporter {
                     + " : '" + coutStr + "'");
         }
 
-        // Unité : kWh par défaut (l'unité est implicite dans le format)
-        String unite = "kWh";
+        // Unité : déduite du type d'énergie
+        String unite = type.getUnite();
 
         return new ConsumptionRecord(dateHeure, type, quantite, cout, unite);
     }

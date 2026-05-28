@@ -297,7 +297,7 @@ public class ConsumptionView extends VBox {
                 }
                 return new ConsumptionRecord(
                         LocalDateTime.of(date, time),
-                        cbType.getValue(), qte, cout, "kWh");
+                        cbType.getValue(), qte, cout, cbType.getValue().getUnite());
             }
             return null;
         });

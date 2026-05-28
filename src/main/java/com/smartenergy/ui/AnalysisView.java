@@ -50,7 +50,7 @@ public class AnalysisView extends ScrollPane {
         tbName.setFont(Font.font("System", FontWeight.BOLD, 20));
         tbName.setTextFill(Color.web("#ffd700"));
 
-        Label tbConso = new Label(formatConso(topBuilding.consommation()) + " kWh");
+        Label tbConso = new Label(formatConso(topBuilding.consommation()) + " (toutes énergies)");
         tbConso.setFont(Font.font("System", FontWeight.NORMAL, 16));
         tbConso.setTextFill(Color.web("#a0a0b0"));
 
@@ -68,7 +68,7 @@ public class AnalysisView extends ScrollPane {
         deName.setFont(Font.font("System", FontWeight.BOLD, 20));
         deName.setTextFill(Color.web("#00d2ff"));
 
-        Label deTotal = new Label(formatConso(dominant.total()) + " kWh");
+        Label deTotal = new Label(formatConso(dominant.total()) + " " + dominant.type().getUnite());
         deTotal.setFont(Font.font("System", FontWeight.NORMAL, 16));
         deTotal.setTextFill(Color.web("#a0a0b0"));
 
@@ -111,7 +111,7 @@ public class AnalysisView extends ScrollPane {
         double estimate = service.getMonthlyEstimate();
         double costEstimate = service.getMonthlyCostEstimate();
 
-        Label estValue = new Label(formatConso(estimate) + " kWh");
+        Label estValue = new Label(formatConso(estimate) + " kWh (énergie)");
         estValue.setFont(Font.font("System", FontWeight.BOLD, 22));
         estValue.setTextFill(Color.web("#00d2ff"));
 
@@ -173,7 +173,7 @@ public class AnalysisView extends ScrollPane {
 
                 Label peakLabel = new Label(
                         peak.date().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                        + "  →  " + formatConso(peak.quantite()) + " kWh");
+                        + "  →  " + formatConso(peak.quantite()) + " (toutes énergies)");
                 peakLabel.setFont(Font.font("System", 14));
                 peakLabel.setTextFill(Color.web("#e94560"));
 
